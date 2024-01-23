@@ -15,7 +15,7 @@ from pprint import pprint as pp
 from models import model
 
 load_dotenv()
-file_path = "../last_updated"
+file_path = "./last_updated"
 ConnectionString = os.environ.get("ConnectionString")
 
 # juso
@@ -39,7 +39,7 @@ session = Session()
 
 def check_and_create():
     if not engine.dialect.has_table(connection, Variable_tableName):  # If table don't exist, Create.
-        with open("../create_batch_table.sql") as file:
+        with open("./create_batch_table.sql") as file:
             query = text(file.read())
             connection.execute(query)
             connection.commit()
@@ -82,7 +82,7 @@ def ApiConnectAddress():
         res_all = session.query(model.t_stm_fld_batch).filter(Column('address') != None).filter(
             Column('db_processed') == 0).filter(
             Column('data_processed') == 0).filter(
-            Column('data_skip') == 0).all()
+            Column('data_skip') == 0).limit(400).all()
 
         for rec in res_all:
             keyword = rec.address.split(',')[0]
@@ -258,6 +258,7 @@ def judge_structure(data):
     # data['roofStrc'] = roofStrc
 
     return data
+
 
 def process():
     check_and_create()
