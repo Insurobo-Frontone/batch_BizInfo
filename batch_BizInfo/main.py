@@ -1,9 +1,4 @@
-import json
-import os
-import time
-import fs
-import requests
-import re
+import json, os, sys, time, fs, requests, re
 
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -72,17 +67,22 @@ def ApiConnectAddress():
         with open(file_path, 'r+') as file:
             temp_data = json.load(file)
         olddt = datetime.fromtimestamp(temp_data)
-        for_comparision = olddt + timedelta(seconds=int(COVER_TIMEOUT))
+        for_comparision = olddt + timedelta(milliseconds=int(COVER_TIMEOUT))
         nowdt = datetime.now()
-        if for_comparision <= nowdt:
-            exit()
+        # if for_comparision >= nowdt:
+        #     pp(for_comparision)
+        #     pp(nowdt)
+        #     sys.exit(1)
 
         juso_datas = []
         cover_datas = []
-        res_all = session.query(model.t_stm_fld_batch).filter(Column('address') != None).filter(
-            Column('db_processed') == 0).filter(
-            Column('data_processed') == 0).filter(
-            Column('data_skip') == 0).limit(400).all()
+        res_all = (session.query(model.t_stm_fld_batch).filter(Column('address') != None)
+                   .filter(Column('db_processed') == 0)
+                   .filter(Column('data_processed') == 0)
+                   .filter(Column('data_skip') == 0)
+                   .order_by(desc(Column('id')))
+                   .limit(200)
+                   .all())
 
         for rec in res_all:
             keyword = rec.address.split(',')[0]
@@ -96,7 +96,7 @@ def ApiConnectAddress():
                 "addInfoYn": 'N',
             }
 
-            response = requests.request("POST", JUSO_URL, data=juso_reqdata, timeout=int(JUSO_TIMEOUT))
+            response = requests.request("POST", JUSO_URL, data=juso_reqdata, timeout=int(JUSO_TIMEOUT)/1000)
             if response.status_code == 200:
                 result_of_api = response.json().get('results').get('common').get('errorCode')
                 totalCount = response.json().get('results').get('common').get('totalCount')
@@ -129,8 +129,8 @@ def ApiConnectAddress():
                 "zip": zipNo,
                 # "startDate": startDate,  # YYYYMMDD
                 # "endDate": endDate,  # YYYYMMDD
-                # "numOfRows": 1,  # 1
-                # "pageNo": 1,  # 1
+                "numOfRows": 1,  # 1
+                "pageNo": 1,  # 1
                 "_type": "json",
             }
             cover_datas.append(
@@ -138,7 +138,7 @@ def ApiConnectAddress():
                  'roadAddr': roadAddr, "cover_response": None})
 
         list(map(get_cover, cover_datas))
-        # pp(cover_datas)
+        pp(cover_datas)
 
         list(map(data_process, cover_datas))
 
@@ -192,19 +192,32 @@ def data_process(data):
         }
         session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).filter(
             Column('data_processed') == 0).update(to_update)
-        # pp(session.update(stm_fld_batch))
         session.commit()
 
 
 def get_cover(data):
-    response_cover = requests.request("GET", COVER_URL, params=data.get('cover_reqdata'), timeout=int(COVER_TIMEOUT))
-
-    if type(response_cover.json()['response']['body']['items']) is dict:
-        if type(response_cover.json()['response']['body']['items']['item']) is dict:
-            data["cover_response"] = judge_structure(response_cover.json()['response']['body']['items']['item'])
+    response_cover = requests.request("GET", COVER_URL, params=data.get('cover_reqdata'), timeout=int(COVER_TIMEOUT)/1000)
+    # try:
+    got_json = response_cover.json()
+    if (type(got_json['response']['body']['items']) is dict
+            and got_json['response']['body']['totalCount'] > 0):
+        if type(got_json['response']['body']['items']['item']) is dict:
+            data["cover_response"] = judge_structure(got_json['response']['body']['items']['item'])
         elif type(response_cover.json()['response']['body']['items']['item']) is list:
-            data["cover_response"] = judge_structure(response_cover.json()['response']['body']['items']['item'][0])
-    return data
+            data["cover_response"] = judge_structure(
+                getSmallmainAtchGbCd(got_json['response']['body']['items']['item']))
+        return data
+    # finally:
+    # pp(response_cover.content)
+    # with open(file_path, 'w', encoding='utf-8') as file:
+    #     json.dump(datetime.now().timestamp(), file)
+    # sys.exit(1)
+
+
+def getSmallmainAtchGbCd(datas):
+    for data in datas:
+        if data["mainAtchGbCd"] == 0:
+            return data
 
 
 def judge_structure(data):
