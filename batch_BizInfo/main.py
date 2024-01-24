@@ -69,10 +69,8 @@ def ApiConnectAddress():
         olddt = datetime.fromtimestamp(temp_data)
         for_comparision = olddt + timedelta(milliseconds=int(COVER_TIMEOUT))
         nowdt = datetime.now()
-        # if for_comparision >= nowdt:
-        #     pp(for_comparision)
-        #     pp(nowdt)
-        #     sys.exit(1)
+        if for_comparision >= nowdt:
+            sys.exit(1)
 
         juso_datas = []
         cover_datas = []
@@ -129,7 +127,7 @@ def ApiConnectAddress():
                 "zip": zipNo,
                 # "startDate": startDate,  # YYYYMMDD
                 # "endDate": endDate,  # YYYYMMDD
-                "numOfRows": 1,  # 1
+                "numOfRows": 10,  # 1
                 "pageNo": 1,  # 1
                 "_type": "json",
             }
@@ -197,31 +195,37 @@ def data_process(data):
 
 def get_cover(data):
     response_cover = requests.request("GET", COVER_URL, params=data.get('cover_reqdata'), timeout=int(COVER_TIMEOUT)/1000)
-    # try:
-    got_json = response_cover.json()
-    if (type(got_json['response']['body']['items']) is dict
-            and got_json['response']['body']['totalCount'] > 0):
-        if type(got_json['response']['body']['items']['item']) is dict:
-            data["cover_response"] = judge_structure(got_json['response']['body']['items']['item'])
-        elif type(response_cover.json()['response']['body']['items']['item']) is list:
-            data["cover_response"] = judge_structure(
-                getSmallmainAtchGbCd(got_json['response']['body']['items']['item']))
-        return data
-    # finally:
-    # pp(response_cover.content)
-    # with open(file_path, 'w', encoding='utf-8') as file:
-    #     json.dump(datetime.now().timestamp(), file)
-    # sys.exit(1)
-
+    try:
+        got_json = response_cover.json()
+        if (type(got_json['response']['body']['items']) is dict
+                and got_json['response']['body']['totalCount'] > 0):
+            if type(got_json['response']['body']['items']['item']) is dict:
+                data["cover_response"] = judge_structure(got_json['response']['body']['items']['item'])
+            elif type(response_cover.json()['response']['body']['items']['item']) is list:
+                data["cover_response"] = judge_structure(
+                    getSmallmainAtchGbCd(got_json['response']['body']['items']['item']))
+            return data
+    finally:
+        with open(file_path, 'w', encoding='utf-8') as file:
+            json.dump(datetime.now().timestamp(), file)
+        sys.exit(1)
 
 def getSmallmainAtchGbCd(datas):
     for data in datas:
         if data["mainAtchGbCd"] == 0:
+            pp(data)
             return data
 
 
 def judge_structure(data):
-    etcStrct = data["etcStrct"]
+    if data is None:
+        return data
+    elif data["etcStrct"] is None:
+        etcStrct = data["strctCdNm"]
+    else:
+        etcStrct = data["etcStrct"]
+
+
     # etcRoof = data["etcRoof"]
 
     # # // 기둥 판단
