@@ -7,7 +7,7 @@ CREATE TABLE `stm_fld_batch` (
   `address` varchar(100) DEFAULT NULL COMMENT ' 주소',
   `detail_address` varchar(100) DEFAULT NULL COMMENT ' 상세주소',
   `area` varchar(100) DEFAULT NULL COMMENT ' 실사용면적',
-  `biz_site_lease_yn` varchar(100) DEFAULT NULL COMMENT ' 사업장임차여부',
+  `biz_site_lease` varchar(100) DEFAULT NULL COMMENT ' 사업장임차여부',
   `ugrnd_flr_cnt` varchar(100) DEFAULT NULL COMMENT ' 지하층수',
   `bld_tot_lyr_num` varchar(100) DEFAULT NULL COMMENT ' 건물전체층수(끝층)',
   `input_bld_st` varchar(100) DEFAULT NULL COMMENT ' 가입층수(시작층)',
