@@ -35,6 +35,7 @@ CREATE TABLE `stm_fld_batch` (
   `birthDate` varchar(50) DEFAULT NULL,
   `sex` char(2) DEFAULT NULL,
   `jehuCd` varchar(30) DEFAULT NULL,
+  `zipCode` varchar(30) DEFAULT NULL,
   `data_processed` tinyint(1) DEFAULT 0,
   `db_processed` tinyint(1) DEFAULT 0,
   `data_skip` tinyint(1) DEFAULT 0,

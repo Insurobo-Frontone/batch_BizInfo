@@ -178,6 +178,7 @@ t_stm_fld = Table(
     Column('birthDate', String(50)),
     Column('sex', CHAR(2)),
     Column('jehuCd', String(30)),
+    Column('zipCode', String(30)),
 )
 
 t_stm_fld_batch = Table(
@@ -218,6 +219,7 @@ t_stm_fld_batch = Table(
     Column('birthDate', String(50)),
     Column('sex', CHAR(2)),
     Column('jehuCd', String(30)),
+    Column('zipCode', String(30)),
     Column('data_processed', TINYINT(1), server_default=text('0')),
     Column('db_processed', TINYINT(1), server_default=text('0')),
     Column('data_skip', TINYINT(1), server_default=text('0')),

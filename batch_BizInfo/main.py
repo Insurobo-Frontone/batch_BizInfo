@@ -49,7 +49,7 @@ def data_copy_for_batch():
           "a.sales_standard_under_yn, a.biz_main_type, a.sales, a.biz_no, a.termsA1, a.termsA2," \
           "a.termsA3, a.termsA4,a.termsA6,a.termsA7," \
           "a.imputation_reason_confirm_yn,a.create_date,a.termsA8,a.difStmFldJoinYn," \
-          "a.phoneNum,a.birthDate,a.sex,a.jehuCd,0,0,0 " \
+          "a.phoneNum,a.birthDate,a.sex,a.jehuCd,a.zipCode,0,0,0 " \
           "FROM  stm_fld A " \
           "LEFT JOIN stm_fld_batch b " \
           "ON a.id = b.id " \
@@ -159,6 +159,7 @@ def db_process(t_stm_fld_batch):
     stm_fld = session.query(model.t_stm_fld).filter(Column('id') == t_stm_fld_batch[0]).first()
     to_update = {
         "address": stm_fld_batch.address,
+        "zipCode": stm_fld_batch.zipCode,
         "bld_tot_lyr_num": stm_fld_batch.bld_tot_lyr_num,
         "ugrnd_flr_cnt": stm_fld_batch.ugrnd_flr_cnt,
         "strct_cd_nm": stm_fld_batch.strct_cd_nm,
@@ -181,6 +182,7 @@ def data_process(data):
             stm_fld_batch.roof_strc == None) or (stm_fld_batch.otwl_strc == None or stm_fld_batch.otwl_strc == False):
         to_update = {
             "address": data.get("jibunAddr"),
+            "zipCode": data.get("zipcode"),
             "bld_tot_lyr_num": data.get("cover_response").get('grndFlrCnt'),
             "ugrnd_flr_cnt": data.get("cover_response").get('ugrndFlrCnt'),
             "strct_cd_nm": data.get("cover_response").get('etcStrct'),
