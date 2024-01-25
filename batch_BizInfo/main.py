@@ -177,7 +177,7 @@ def data_process(data):
     stm_fld_batch = session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).filter(
         Column('data_processed') == 0).first()
 
-    if (stm_fld_batch.address == None) or (stm_fld_batch.bld_tot_lyr_num == None or int(
+    if (stm_fld_batch.address == None) or (stm_fld_batch.bld_tot_lyr_num == None or stm_fld_batch.bld_tot_lyr_num == '' or int(
             stm_fld_batch.bld_tot_lyr_num) == 0) or (stm_fld_batch.strct_cd_nm == None) or (
             stm_fld_batch.roof_strc == None) or (stm_fld_batch.otwl_strc == None or stm_fld_batch.otwl_strc == False):
         to_update = {
