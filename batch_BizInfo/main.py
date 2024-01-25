@@ -41,32 +41,23 @@ def check_and_create():
 
 
 def data_copy_for_batch():
-    sql = "insert into stm_fld_batch (id,biz_name,ceo_name,biz_type,building_division,address," \
-          "detail_address,area,biz_site_lease_yn,ugrnd_flr_cnt,bld_tot_lyr_num,input_bld_st,input_bld_ed," \
-          "strct_cd_nm,roof_strc,otwl_strc,worker_num_standard_under_yn,worker_num,sales_standard_under_yn," \
-          "biz_main_type,sales,biz_no,termsA1,termsA2,termsA3,termsA4,termsA6,termsA7,imputation_reason_confirm_yn," \
-          "create_date,termsA8,difStmFldJoinYn,phoneNum,birthDate,sex,jehuCd,zipCode," \
-          "data_processed,db_processed,data_skip)" \
-          "select a.id id, a.biz_name biz_name, a.ceo_name ceo_name, a.biz_type biz_type, " \
-          "a.building_division building_division, a.address address," \
-          "a.detail_address detail_address,a.area area, a.biz_site_lease_yn biz_site_lease_yn," \
-          "a.ugrnd_flr_cnt ugrnd_flr_cnt," \
-          "a.bld_tot_lyr_num bld_tot_lyr_num, a.input_bld_st input_bld_st, a.input_bld_ed input_bld_ed," \
-          "a.strct_cd_nm strct_cd_nm, a.roof_strc roof_strc, a.otwl_strc otwl_strc, " \
-          "a.worker_num_standard_under_yn worker_num_standard_under_yn, a.worker_num worker_num," \
-          "a.sales_standard_under_yn sales_standard_under_yn, a.biz_main_type biz_main_type," \
-          " a.sales sales, a.biz_no biz_no, a.termsA1 termsA1, a.termsA2 termsA2," \
-          "a.termsA3 termsA3, a.termsA4 termsA4,a.termsA6 termsA6,a.termsA7 termsA7," \
-          "a.imputation_reason_confirm_yn imputation_reason_confirm_yn,a.create_date create_date" \
-          ",a.termsA8 termsA8,a.difStmFldJoinYn difStmFldJoinYn," \
-          "a.phoneNum phoneNum,a.birthDate birthDate,a.sex sex,a.jehuCd jehuCd,a.zipCode zipCode," \
-          "0 data_processed,0 db_processed,0 data_skip " \
-          "FROM  stm_fld A " \
-          "LEFT JOIN stm_fld_batch b " \
-          "ON a.id = b.id " \
-          "WHERE  b.id IS NULL  " \
-          "GROUP  BY a.id  " \
-          "ORDER  BY a.id"
+    sql = ("insert into stm_fld_batch (id, biz_name, ceo_name, biz_type, building_division, `address`, detail_address, "
+           "area, biz_site_lease_yn, ugrnd_flr_cnt, bld_tot_lyr_num, input_bld_st, input_bld_ed, strct_cd_nm, "
+           "roof_strc, otwl_strc, worker_num_standard_under_yn, worker_num, sales_standard_under_yn, biz_main_type, "
+           "sales, biz_no, termsA1, termsA2, termsA3, termsA4, termsA6, termsA7, imputation_reason_confirm_yn, "
+           "create_date, termsA8, difStmFldJoinYn, phoneNum, birthDate, sex, jehuCd, zipCode, data_processed, "
+           "db_processed, data_skip) select a.id id, a.biz_name biz_name, a.ceo_name ceo_name, a.biz_type biz_type,"
+           "a.building_division building_division,a.address `address`,a.detail_address detail_address,a.area area,"
+           "a.biz_site_lease_yn biz_site_lease_yn,a.ugrnd_flr_cnt ugrnd_flr_cnt,a.bld_tot_lyr_num bld_tot_lyr_num,"
+           "a.input_bld_st input_bld_st,a.input_bld_ed input_bld_ed,a.strct_cd_nm strct_cd_nm,a.roof_strc roof_strc,"
+           "a.otwl_strc otwl_strc,a.worker_num_standard_under_yn worker_num_standard_under_yn,a.worker_num "
+           "worker_num,a.sales_standard_under_yn sales_standard_under_yn,a.biz_main_type biz_main_type,a.sales sales,"
+           "a.biz_no biz_no,a.termsA1 termsA1,a.termsA2 termsA2, a.termsA3 termsA3, a.termsA4 termsA4, "
+           "a.termsA6 termsA6, a.termsA7 termsA7,a.imputation_reason_confirm_yn imputation_reason_confirm_yn, "
+           "a.create_date create_date, a.termsA8 termsA8, a.difStmFldJoinYn difStmFldJoinYn,a.phoneNum phoneNum, "
+           "a.birthDate birthDate, a.sex sex, a.jehuCd jehuCd, a.zipCode zipCode, 0 data_processed, 0 db_processed, "
+           "0 data_skip FROM stm_fld a LEFT JOIN stm_fld_batch b ON a.id = b.id WHERE b.id IS NULL GROUP BY a.id "
+           "ORDER BY a.id")
     connection.execute(text(sql))
     skip_sql = "update stm_fld_batch set data_skip = 1 where address is null"
     connection.execute(text(skip_sql))
