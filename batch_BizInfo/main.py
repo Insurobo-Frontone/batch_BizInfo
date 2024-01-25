@@ -41,7 +41,12 @@ def check_and_create():
 
 
 def data_copy_for_batch():
-    sql = "insert into stm_fld_batch " \
+    sql = "insert into stm_fld_batch (id,biz_name,ceo_name,biz_type,building_division,address," \
+          "detail_address,area,biz_site_lease_yn,ugrnd_flr_cnt,bld_tot_lyr_num,input_bld_st,input_bld_ed,"\ 
+          "strct_cd_nm,roof_strc,otwl_strc,worker_num_standard_under_yn,worker_num,sales_standard_under_yn,"\ 
+          "biz_main_type,sales,biz_no,termsA1,termsA2,termsA3,termsA4,termsA6,termsA7,imputation_reason_confirm_yn,"\ 
+          "create_date,termsA8,difStmFldJoinYn,phoneNum,birthDate,sex,jehuCd,zipCode,"\ 
+          "data_processed,db_processed,data_skip)" \
           "select a.id, a.biz_name, a.ceo_name, a.biz_type, a.building_division, a.address," \
           "a.detail_address,a.area, a.biz_site_lease_yn,a.ugrnd_flr_cnt," \
           "a.bld_tot_lyr_num, a.input_bld_st, a.input_bld_ed," \
@@ -60,7 +65,6 @@ def data_copy_for_batch():
     skip_sql = "update stm_fld_batch set data_skip = 1 where address is null"
     connection.execute(text(skip_sql))
     result = connection.commit()
-
 
 def ApiConnectAddress():
     try:
