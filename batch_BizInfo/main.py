@@ -128,7 +128,7 @@ def ApiConnectAddress():
                 # "startDate": startDate,  # YYYYMMDD
                 # "endDate": endDate,  # YYYYMMDD
                 "numOfRows": 10,  # 1
-                "pageNo": 1,  # 1
+                # "pageNo": 1,  # 1
                 "_type": "json",
             }
             cover_datas.append(
@@ -136,7 +136,7 @@ def ApiConnectAddress():
                  'roadAddr': roadAddr, "cover_response": None})
 
         list(map(get_cover, cover_datas))
-        pp(cover_datas)
+        # pp(cover_datas)
 
         list(map(data_process, cover_datas))
 
@@ -194,7 +194,7 @@ def data_process(data):
 
 
 def get_cover(data):
-    response_cover = requests.request("GET", COVER_URL, params=data.get('cover_reqdata'), timeout=int(COVER_TIMEOUT)/1000)
+    response_cover = requests.request("GET", COVER_URL, params=data.get('cover_reqdata'), timeout=int(COVER_TIMEOUT)/100)
     try:
         got_json = response_cover.json()
         if (type(got_json['response']['body']['items']) is dict
@@ -205,10 +205,14 @@ def get_cover(data):
                 data["cover_response"] = judge_structure(
                     getSmallmainAtchGbCd(got_json['response']['body']['items']['item']))
             return data
-    finally:
-        with open(file_path, 'w', encoding='utf-8') as file:
-            json.dump(datetime.now().timestamp(), file)
-        sys.exit(1)
+    except Exception as e:
+        return False
+    # finally:
+    #     pp(response_cover)
+    #     pp(data)
+        # with open(file_path, 'w', encoding='utf-8') as file:
+        #     json.dump(datetime.now().timestamp(), file)
+        # sys.exit(1)
 
 def getSmallmainAtchGbCd(datas):
     for data in datas:
