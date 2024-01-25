@@ -47,14 +47,20 @@ def data_copy_for_batch():
           "biz_main_type,sales,biz_no,termsA1,termsA2,termsA3,termsA4,termsA6,termsA7,imputation_reason_confirm_yn," \
           "create_date,termsA8,difStmFldJoinYn,phoneNum,birthDate,sex,jehuCd,zipCode," \
           "data_processed,db_processed,data_skip)" \
-          "select a.id, a.biz_name, a.ceo_name, a.biz_type, a.building_division, a.address," \
-          "a.detail_address,a.area, a.biz_site_lease_yn,a.ugrnd_flr_cnt," \
-          "a.bld_tot_lyr_num, a.input_bld_st, a.input_bld_ed," \
-          "a.strct_cd_nm, a.roof_strc, a.otwl_strc, a.worker_num_standard_under_yn, a.worker_num," \
-          "a.sales_standard_under_yn, a.biz_main_type, a.sales, a.biz_no, a.termsA1, a.termsA2," \
-          "a.termsA3, a.termsA4,a.termsA6,a.termsA7," \
-          "a.imputation_reason_confirm_yn,a.create_date,a.termsA8,a.difStmFldJoinYn," \
-          "a.phoneNum,a.birthDate,a.sex,a.jehuCd,a.zipCode,0,0,0 " \
+          "select a.id id, a.biz_name biz_name, a.ceo_name ceo_name, a.biz_type biz_type, " \
+          "a.building_division building_division, a.address address," \
+          "a.detail_address detail_address,a.area area, a.biz_site_lease_yn biz_site_lease_yn," \
+          "a.ugrnd_flr_cnt ugrnd_flr_cnt," \
+          "a.bld_tot_lyr_num bld_tot_lyr_num, a.input_bld_st input_bld_st, a.input_bld_ed input_bld_ed," \
+          "a.strct_cd_nm strct_cd_nm, a.roof_strc roof_strc, a.otwl_strc otwl_strc, " \
+          "a.worker_num_standard_under_yn worker_num_standard_under_yn, a.worker_num worker_num," \
+          "a.sales_standard_under_yn sales_standard_under_yn, a.biz_main_type biz_main_type," \
+          " a.sales sales, a.biz_no biz_no, a.termsA1 termsA1, a.termsA2 termsA2," \
+          "a.termsA3 termsA3, a.termsA4 termsA4,a.termsA6 termsA6,a.termsA7 termsA7," \
+          "a.imputation_reason_confirm_yn imputation_reason_confirm_yn,a.create_date create_date" \
+          ",a.termsA8 termsA8,a.difStmFldJoinYn difStmFldJoinYn," \
+          "a.phoneNum phoneNum,a.birthDate birthDate,a.sex sex,a.jehuCd jehuCd,a.zipCode zipCode," \
+          "0 data_processed,0 db_processed,0 data_skip " \
           "FROM  stm_fld A " \
           "LEFT JOIN stm_fld_batch b " \
           "ON a.id = b.id " \
