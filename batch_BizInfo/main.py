@@ -42,10 +42,10 @@ def check_and_create():
 
 def data_copy_for_batch():
     sql = "insert into stm_fld_batch (id,biz_name,ceo_name,biz_type,building_division,address," \
-          "detail_address,area,biz_site_lease_yn,ugrnd_flr_cnt,bld_tot_lyr_num,input_bld_st,input_bld_ed,"\ 
-          "strct_cd_nm,roof_strc,otwl_strc,worker_num_standard_under_yn,worker_num,sales_standard_under_yn,"\ 
-          "biz_main_type,sales,biz_no,termsA1,termsA2,termsA3,termsA4,termsA6,termsA7,imputation_reason_confirm_yn,"\ 
-          "create_date,termsA8,difStmFldJoinYn,phoneNum,birthDate,sex,jehuCd,zipCode,"\ 
+          "detail_address,area,biz_site_lease_yn,ugrnd_flr_cnt,bld_tot_lyr_num,input_bld_st,input_bld_ed," \
+          "strct_cd_nm,roof_strc,otwl_strc,worker_num_standard_under_yn,worker_num,sales_standard_under_yn," \
+          "biz_main_type,sales,biz_no,termsA1,termsA2,termsA3,termsA4,termsA6,termsA7,imputation_reason_confirm_yn," \
+          "create_date,termsA8,difStmFldJoinYn,phoneNum,birthDate,sex,jehuCd,zipCode," \
           "data_processed,db_processed,data_skip)" \
           "select a.id, a.biz_name, a.ceo_name, a.biz_type, a.building_division, a.address," \
           "a.detail_address,a.area, a.biz_site_lease_yn,a.ugrnd_flr_cnt," \
@@ -65,6 +65,7 @@ def data_copy_for_batch():
     skip_sql = "update stm_fld_batch set data_skip = 1 where address is null"
     connection.execute(text(skip_sql))
     result = connection.commit()
+
 
 def ApiConnectAddress():
     try:
@@ -98,7 +99,7 @@ def ApiConnectAddress():
                 "addInfoYn": 'N',
             }
 
-            response = requests.request("POST", JUSO_URL, data=juso_reqdata, timeout=int(JUSO_TIMEOUT)/1000)
+            response = requests.request("POST", JUSO_URL, data=juso_reqdata, timeout=int(JUSO_TIMEOUT) / 1000)
             if response.status_code == 200:
                 result_of_api = response.json().get('results').get('common').get('errorCode')
                 totalCount = response.json().get('results').get('common').get('totalCount')
@@ -181,7 +182,8 @@ def data_process(data):
     stm_fld_batch = session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).filter(
         Column('data_processed') == 0).first()
 
-    if (stm_fld_batch.address == None) or (stm_fld_batch.bld_tot_lyr_num == None or stm_fld_batch.bld_tot_lyr_num == '' or int(
+    if (stm_fld_batch.address == None) or (
+            stm_fld_batch.bld_tot_lyr_num == None or stm_fld_batch.bld_tot_lyr_num == '' or int(
             stm_fld_batch.bld_tot_lyr_num) == 0) or (stm_fld_batch.strct_cd_nm == None) or (
             stm_fld_batch.roof_strc == None) or (stm_fld_batch.otwl_strc == None or stm_fld_batch.otwl_strc == False):
         to_update = {
@@ -200,7 +202,8 @@ def data_process(data):
 
 
 def get_cover(data):
-    response_cover = requests.request("GET", COVER_URL, params=data.get('cover_reqdata'), timeout=int(COVER_TIMEOUT)/100)
+    response_cover = requests.request("GET", COVER_URL, params=data.get('cover_reqdata'),
+                                      timeout=int(COVER_TIMEOUT) / 100)
     try:
         got_json = response_cover.json()
         if (type(got_json['response']['body']['items']) is dict
@@ -216,9 +219,10 @@ def get_cover(data):
     # finally:
     #     pp(response_cover)
     #     pp(data)
-        # with open(file_path, 'w', encoding='utf-8') as file:
-        #     json.dump(datetime.now().timestamp(), file)
-        # sys.exit(1)
+    # with open(file_path, 'w', encoding='utf-8') as file:
+    #     json.dump(datetime.now().timestamp(), file)
+    # sys.exit(1)
+
 
 def getSmallmainAtchGbCd(datas):
     for data in datas:
@@ -234,7 +238,6 @@ def judge_structure(data):
         etcStrct = data["strctCdNm"]
     else:
         etcStrct = data["etcStrct"]
-
 
     # etcRoof = data["etcRoof"]
 
