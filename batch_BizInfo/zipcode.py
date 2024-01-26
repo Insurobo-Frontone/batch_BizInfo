@@ -31,9 +31,11 @@ connection = engine.connect()
 Session = sessionmaker(bind=engine)
 session = Session()
 
+
 def ApiConnectAddress():
     juso_datas = []
     cover_datas = []
+
     res_all = (session.query(model.t_stm_fld_batch).filter(Column('address') != None)
                .filter(Column('data_skip') == 0)
                .order_by(desc(Column('id')))
@@ -58,7 +60,6 @@ def ApiConnectAddress():
             # if result_of_api != '0' and totalCount > 0:
             juso_datas.append({"SEQ": rec.id, "response": response.json()})
 
-
     for juso_data in juso_datas:
         roadAddr = juso_data.get('response').get('results').get('juso')[0].get('roadAddr')
         jibunAddr = juso_data.get('response').get('results').get('juso')[0].get('jibunAddr')
@@ -75,21 +76,61 @@ def ApiConnectAddress():
         now = datetime.now()
         startDate = endDate = now.strftime("%Y%m%d")
 
-
         stm_fld_batch = session.query(model.t_stm_fld_batch).filter(Column('id') == juso_data['SEQ']).first()
-        stm_fld = session.query(model.t_stm_fld).filter(Column('id') == juso_data['SEQ']).first()
+        # stm_fld = session.query(model.t_stm_fld).filter(Column('id') == juso_data['SEQ']).first()
+        # biz_type=stm_fld_batch.biz_type
+        # search = "%{}%".format(stm_fld_batch.biz_type)
+        # in103cr = session.query(model.t_IN103CR).where(Column('CODE').like(search)).first()
 
+        PTYKORNM = "%{}%".format(stm_fld_batch.ceo_name)
+        PTYBIZNM = "%{}%".format(stm_fld_batch.biz_name)
+        BIZNO = "%{}%".format(stm_fld_batch.biz_no)
+        in101tr = session.query(model.t_IN101TR).filter(Column('PTYKORNM').like(PTYKORNM)).filter(
+            Column('PTYBIZNM').like(PTYBIZNM)).filter(Column('BIZNO').like(BIZNO)).first()
         if stm_fld_batch.zipCode is None:
             to_update = {
                 "zipCode": zipNo,
             }
+
+            # pp(to_update)
+
             session.query(model.t_stm_fld_batch).filter(Column('id') == stm_fld_batch.id).update(to_update)
             session.query(model.t_stm_fld).filter(Column('id') == stm_fld_batch.id).update(to_update)
             # # session.query(model.t_stm_fld_batch).filter(Column('id') == stm_fld_batch.id).update({"db_processed": 1})
-            session.commit()
+        # pp(in101tr)
+        if in101tr is not None:
+            to_update = {
+                "phoneNum": in101tr.TELNO,
+                "birthDate": in101tr.INR_BIRTH,
+                "sex": 'F' if int(in101tr.INR_GENDER) % 2 == 0 else 'M',
+            }
+
+            pp(to_update)
+
+            session.query(model.t_stm_fld_batch).filter(Column('id') == stm_fld_batch.id).update(to_update)
+            session.query(model.t_stm_fld).filter(Column('id') == stm_fld_batch.id).update(to_update)
+            # # session.query(model.t_stm_fld_batch).filter(Column('id') == stm_fld_batch.id).update({"db_processed": 1})
+
+        stm_fld_batch = session.query(model.t_stm_fld_batch).filter(Column('id') == juso_data['SEQ']).first()
+        # stm_fld = session.query(model.t_stm_fld).filter(Column('id') == juso_data['SEQ']).first()
+        # biz_type=stm_fld_batch.biz_type
+        search = "%{}%".format(stm_fld_batch.biz_type)
+        in103cr = session.query(model.t_IN103CR).where(Column('CODE').like(search)).first()
+
+        to_update = {
+            "biz_type": in103cr.NAME,
+        }
+
+            # pp(to_update)
+
+        session.query(model.t_stm_fld_batch).filter(Column('id') == stm_fld_batch.id).update(to_update)
+        session.query(model.t_stm_fld).filter(Column('id') == stm_fld_batch.id).update(to_update)
+        # # session.query(model.t_stm_fld_batch).filter(Column('id') == stm_fld_batch.id).update({"db_processed": 1})
+        session.commit()
 
 def process():
     ApiConnectAddress()
+
 
 if __name__ == '__main__':
     process()
