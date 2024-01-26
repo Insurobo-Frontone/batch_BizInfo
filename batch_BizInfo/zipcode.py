@@ -37,7 +37,6 @@ def ApiConnectAddress():
     res_all = (session.query(model.t_stm_fld_batch).filter(Column('address') != None)
                .filter(Column('data_skip') == 0)
                .order_by(desc(Column('id')))
-               .limit(200)
                .all())
 
     for rec in res_all:
@@ -84,8 +83,9 @@ def ApiConnectAddress():
             to_update = {
                 "zipCode": zipNo,
             }
+            session.query(model.t_stm_fld_batch).filter(Column('id') == stm_fld_batch.id).update(to_update)
             session.query(model.t_stm_fld).filter(Column('id') == stm_fld_batch.id).update(to_update)
-            # session.query(model.t_stm_fld_batch).filter(Column('id') == stm_fld_batch.id).update({"db_processed": 1})
+            # # session.query(model.t_stm_fld_batch).filter(Column('id') == stm_fld_batch.id).update({"db_processed": 1})
             session.commit()
 
 def process():
