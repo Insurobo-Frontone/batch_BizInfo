@@ -185,6 +185,7 @@ def db_process(t_stm_fld_batch):
     session.query(model.t_stm_fld).filter(Column('id') == stm_fld_batch.id).update(to_update)
     session.query(model.t_stm_fld_batch).filter(Column('id') == stm_fld_batch.id).update({"db_processed": 1})
     session.commit()
+    time.sleep(1)
 
 
 def data_process(data):
@@ -206,7 +207,7 @@ def data_process(data):
             "strct_cd_nm": data.get("cover_response").get('etcStrct'),
             "roof_strc": data.get("cover_response").get('etcRoof'),
             "otwl_strc": data.get("cover_response").get('otwlStrc'),
-            # "data_processed": 1,
+            "data_processed": 1,
         }
         session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).filter(
             Column('data_processed') == 0).update(to_update)
