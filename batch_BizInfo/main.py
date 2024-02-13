@@ -1,4 +1,10 @@
-import json, os, sys, time, fs, requests, re
+import os
+import sys
+import time
+import fs
+import requests
+import re
+import json
 
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -45,9 +51,11 @@ def data_copy_for_batch():
            "`area`, biz_site_lease, ugrnd_flr_cnt, bld_tot_lyr_num, input_bld_st, input_bld_ed, strct_cd_nm, "
            "roof_strc, otwl_strc, worker_num_standard_under_yn, worker_num, sales_standard_under_yn, "
            "sales, biz_no, termsA1, termsA2, termsA3, termsA4, termsA6, termsA7, imputation_reason_confirm_yn, "
-           "create_date, termsA8, difStmFldJoinYn, phoneNum, birthDate, sex, jehuCd, zipCode, data_processed, "
-           "db_processed, data_skip) select a.id id, a.biz_name biz_name, a.ceo_name ceo_name, a.biz_type biz_type,"
-           "a.building_division building_division,a.address `address`,a.detail_address detail_address,a.area area,"
+           "create_date, termsA8, difStmFldJoinYn, phoneNum, birthDate, sex, jehuCd, roadAddr, zipCode, squareMeter, "
+           "bunjiAddr, capitalDo, si,"
+           "data_processed,db_processed, data_skip) select a.id id, a.biz_name biz_name, a.ceo_name ceo_name, "
+           "a.biz_type biz_type,a.building_division building_division,a.address `address`,a.detail_address "
+           "detail_address,a.area area, "
            "a.biz_site_lease biz_site_lease,a.ugrnd_flr_cnt ugrnd_flr_cnt,a.bld_tot_lyr_num bld_tot_lyr_num,"
            "a.input_bld_st input_bld_st,a.input_bld_ed input_bld_ed,a.strct_cd_nm strct_cd_nm,a.roof_strc roof_strc,"
            "a.otwl_strc otwl_strc,a.worker_num_standard_under_yn worker_num_standard_under_yn,a.worker_num "
@@ -55,7 +63,9 @@ def data_copy_for_batch():
            "a.biz_no biz_no,a.termsA1 termsA1,a.termsA2 termsA2, a.termsA3 termsA3, a.termsA4 termsA4, "
            "a.termsA6 termsA6, a.termsA7 termsA7,a.imputation_reason_confirm_yn imputation_reason_confirm_yn, "
            "a.create_date create_date, a.termsA8 termsA8, a.difStmFldJoinYn difStmFldJoinYn,a.phoneNum phoneNum, "
-           "a.birthDate birthDate, a.sex sex, a.jehuCd jehuCd, a.zipCode zipCode, 0 data_processed, 0 db_processed, "
+           "a.birthDate birthDate, a.sex sex, a.jehuCd jehuCd, a.roadAddr roadAddr, a.zipCode zipCode, "
+           "a.squareMeter squareMeter, a.bunjiAddr bunjiAddr, a.capitalDo capitalDo,a.si si,  0 data_processed, "
+           "0 db_processed,"
            "0 data_skip FROM stm_fld a LEFT JOIN stm_fld_batch b ON a.id = b.id WHERE b.id IS NULL GROUP BY a.id "
            "ORDER BY a.id")
     connection.execute(text(sql))
@@ -81,7 +91,7 @@ def ApiConnectAddress():
                    .filter(Column('data_processed') == 0)
                    .filter(Column('data_skip') == 0)
                    .order_by(desc(Column('id')))
-                   .limit(200)
+                   # .limit(200)
                    .all())
 
         for rec in res_all:
@@ -161,6 +171,8 @@ def db_process(t_stm_fld_batch):
     stm_fld = session.query(model.t_stm_fld).filter(Column('id') == t_stm_fld_batch[0]).first()
     to_update = {
         "address": stm_fld_batch.address,
+        "roadAddr": stm_fld_batch.roadAddr,
+        "bunjiAddr": stm_fld_batch.bunjiAddr,
         "zipCode": stm_fld_batch.zipCode,
         "bld_tot_lyr_num": stm_fld_batch.bld_tot_lyr_num,
         "ugrnd_flr_cnt": stm_fld_batch.ugrnd_flr_cnt,
@@ -176,33 +188,37 @@ def db_process(t_stm_fld_batch):
 def data_process(data):
     if data.get("cover_response") == None:
         return
-    stm_fld_batch = session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).filter(
-        Column('data_processed') == 0).first()
-
-    if (stm_fld_batch.address == None) or (
+    # stm_fld_batch = session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).filter(
+    #    Column('data_processed') == 0).first()
+    stm_fld_batch = session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).first()
+    if ((stm_fld_batch.address == None or stm_fld_batch.roadAddr == None) or (stm_fld_batch.zipCode == None) or (
             stm_fld_batch.bld_tot_lyr_num == None or stm_fld_batch.bld_tot_lyr_num == '' or int(
-            stm_fld_batch.bld_tot_lyr_num) == 0) or (stm_fld_batch.strct_cd_nm == None) or (
-            stm_fld_batch.roof_strc == None) or (stm_fld_batch.otwl_strc == None or stm_fld_batch.otwl_strc == False):
+        stm_fld_batch.bld_tot_lyr_num) == 0) or (stm_fld_batch.strct_cd_nm == None) or (
+            stm_fld_batch.roof_strc == None) or (stm_fld_batch.otwl_strc == None or stm_fld_batch.otwl_strc == False)):
         to_update = {
-            "address": data.get("jibunAddr"),
+            "bunjiAddr": data.get("jibunAddr"),
+            "roadAddr": data.get("roadAddr"),
             "zipCode": data.get("zipcode"),
             "bld_tot_lyr_num": data.get("cover_response").get('grndFlrCnt'),
             "ugrnd_flr_cnt": data.get("cover_response").get('ugrndFlrCnt'),
             "strct_cd_nm": data.get("cover_response").get('etcStrct'),
             "roof_strc": data.get("cover_response").get('etcRoof'),
             "otwl_strc": data.get("cover_response").get('otwlStrc'),
-            "data_processed": 1,
+            # "data_processed": 1,
         }
         session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).filter(
             Column('data_processed') == 0).update(to_update)
+        # session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).update(to_update)
+        #
+        # session.commit()
+        if stm_fld_batch.zipcode == None or stm_fld_batch.zipcode == '':
+            to_update_zip = {
+                "zipCode": data.get("zipcode"),
+            }
+        session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).filter(
+            Column('data_processed') == 1).update(to_update_zip)
         session.commit()
-    # if stm_fld_batch.zipcode == None or stm_fld_batch.zipcode == '':
-    #     to_update_zip = {
-    #         "zipCode": data.get("zipcode"),
-    #     }
-    #     session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).filter(
-    #         Column('data_processed') == 1).update(to_update_zip)
-    #     session.commit()
+
 
 def get_cover(data):
     response_cover = requests.request("GET", COVER_URL, params=data.get('cover_reqdata'),

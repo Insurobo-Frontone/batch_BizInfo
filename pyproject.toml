@@ -13,6 +13,7 @@ pymysql = "^1.1.0"
 fs = "^2.4.16"
 requests = "^2.31.0"
 sqlacodegen-v2 = "^0.1.4"
+cryptography = "^42.0.2"
 
 
 [build-system]
