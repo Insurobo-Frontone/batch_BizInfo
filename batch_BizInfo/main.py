@@ -214,12 +214,12 @@ def data_process(data):
         # session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).update(to_update)
         #
         # session.commit()
-        if stm_fld_batch.zipCode == None or stm_fld_batch.zipCode == '':
-            to_update_zip = {
-                "zipCode": data.get("zipcode"),
-            }
-        session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).filter(
-            Column('data_processed') == 1).update(to_update_zip)
+        # if stm_fld_batch.zipCode == None or stm_fld_batch.zipCode == '':
+        #     to_update_zip = {
+        #         "zipCode": data.get("zipcode"),
+        #     }
+        # session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).filter(
+        #     Column('data_processed') == 1).update(to_update_zip)
         session.commit()
 
 
