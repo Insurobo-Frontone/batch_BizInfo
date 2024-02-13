@@ -174,6 +174,8 @@ def db_process(t_stm_fld_batch):
         "roadAddr": stm_fld_batch.roadAddr,
         "bunjiAddr": stm_fld_batch.bunjiAddr,
         "zipCode": stm_fld_batch.zipCode,
+        "si": stm_fld_batch.si,
+        "capitalDo": stm_fld_batch.capitalDo,
         "bld_tot_lyr_num": stm_fld_batch.bld_tot_lyr_num,
         "ugrnd_flr_cnt": stm_fld_batch.ugrnd_flr_cnt,
         "strct_cd_nm": stm_fld_batch.strct_cd_nm,
@@ -188,9 +190,9 @@ def db_process(t_stm_fld_batch):
 def data_process(data):
     if data.get("cover_response") == None:
         return
-    # stm_fld_batch = session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).filter(
-    #    Column('data_processed') == 0).first()
-    stm_fld_batch = session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).first()
+    stm_fld_batch = session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).filter(
+       Column('data_processed') == 0).first()
+    # stm_fld_batch = session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).first()
     if ((stm_fld_batch.address == None or stm_fld_batch.roadAddr == None) or (stm_fld_batch.zipCode == None) or (
             stm_fld_batch.bld_tot_lyr_num == None or stm_fld_batch.bld_tot_lyr_num == '' or int(
         stm_fld_batch.bld_tot_lyr_num) == 0) or (stm_fld_batch.strct_cd_nm == None) or (
@@ -211,7 +213,7 @@ def data_process(data):
         # session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).update(to_update)
         #
         # session.commit()
-        if stm_fld_batch.zipcode == None or stm_fld_batch.zipcode == '':
+        if stm_fld_batch.zipCode == None or stm_fld_batch.zipCode == '':
             to_update_zip = {
                 "zipCode": data.get("zipcode"),
             }
@@ -246,7 +248,7 @@ def get_cover(data):
 def getSmallmainAtchGbCd(datas):
     for data in datas:
         if data["mainAtchGbCd"] == 0:
-            pp(data)
+            # pp(data)
             return data
 
 

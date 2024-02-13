@@ -187,6 +187,8 @@ def compress_capital_si(sido):
         sinm = "울산"
     elif re.findall(r'부산', sido, re.IGNORECASE):
         sinm = "부산"
+    elif re.findall(r'세종', sido, re.IGNORECASE):
+        sinm = "세종"
     elif re.findall(r'전북', sido, re.IGNORECASE):
         sinm = "전북"
     elif re.findall(r'전남', sido, re.IGNORECASE):
