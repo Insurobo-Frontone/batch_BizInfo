@@ -1,4 +1,10 @@
-import json, os, sys, time, fs, requests, re
+import os
+import sys
+import time
+import fs
+import requests
+import re
+import json
 
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -63,6 +69,8 @@ def ApiConnectAddress():
     for juso_data in juso_datas:
         roadAddr = juso_data.get('response').get('results').get('juso')[0].get('roadAddr')
         jibunAddr = juso_data.get('response').get('results').get('juso')[0].get('jibunAddr')
+        sggNm = juso_data.get('response').get('results').get('juso')[0].get('sggNm')
+        siNm = juso_data.get('response').get('results').get('juso')[0].get('siNm')
         zipNo = juso_data.get('response').get('results').get('juso')[0].get('zipNo')
         admCd = juso_data.get('response').get('results').get('juso')[0].get('admCd')
         platGbCd = juso_data.get('response').get('results').get('juso')[0].get('platGbCd')
@@ -84,19 +92,25 @@ def ApiConnectAddress():
 
         PTYKORNM = "%{}%".format(stm_fld_batch.ceo_name)
         PTYBIZNM = "%{}%".format(stm_fld_batch.biz_name)
+
         BIZNO = "%{}%".format(stm_fld_batch.biz_no)
         in101tr = session.query(model.t_IN101TR).filter(Column('PTYKORNM').like(PTYKORNM)).filter(
             Column('PTYBIZNM').like(PTYBIZNM)).filter(Column('BIZNO').like(BIZNO)).first()
-        if stm_fld_batch.zipCode is None:
-            to_update = {
-                "zipCode": zipNo,
-            }
+        # if stm_fld_batch.zipCode is None:
+        to_update = {
+            "bunjiAddr": jibunAddr,
+            "zipCode": zipNo,
+            "roadAddr": roadAddr,
+            "capitalDo": compress_capital_si(siNm),
+            "si": compress_sido(sggNm),
 
-            # pp(to_update)
+        }
 
-            session.query(model.t_stm_fld_batch).filter(Column('id') == stm_fld_batch.id).update(to_update)
-            session.query(model.t_stm_fld).filter(Column('id') == stm_fld_batch.id).update(to_update)
-            # # session.query(model.t_stm_fld_batch).filter(Column('id') == stm_fld_batch.id).update({"db_processed": 1})
+        # pp(to_update)
+
+        session.query(model.t_stm_fld_batch).filter(Column('id') == stm_fld_batch.id).update(to_update)
+        session.query(model.t_stm_fld).filter(Column('id') == stm_fld_batch.id).update(to_update)
+        # # session.query(model.t_stm_fld_batch).filter(Column('id') == stm_fld_batch.id).update({"db_processed": 1})
         # pp(in101tr)
         if in101tr is not None:
             to_update = {
@@ -105,28 +119,90 @@ def ApiConnectAddress():
                 "sex": 'F' if int(in101tr.INR_GENDER) % 2 == 0 else 'M',
             }
 
-            pp(to_update)
+            # pp(to_update)
 
             session.query(model.t_stm_fld_batch).filter(Column('id') == stm_fld_batch.id).update(to_update)
             session.query(model.t_stm_fld).filter(Column('id') == stm_fld_batch.id).update(to_update)
             # # session.query(model.t_stm_fld_batch).filter(Column('id') == stm_fld_batch.id).update({"db_processed": 1})
 
-        stm_fld_batch = session.query(model.t_stm_fld_batch).filter(Column('id') == juso_data['SEQ']).first()
-        # stm_fld = session.query(model.t_stm_fld).filter(Column('id') == juso_data['SEQ']).first()
-        # biz_type=stm_fld_batch.biz_type
-        search = "%{}%".format(stm_fld_batch.biz_type)
-        in103cr = session.query(model.t_IN103CR).where(Column('CODE').like(search)).first()
+        # stm_fld_batch = session.query(model.t_stm_fld_batch).filter(Column('id') == juso_data['SEQ']).first()
+        # # stm_fld = session.query(model.t_stm_fld).filter(Column('id') == juso_data['SEQ']).first()
+        # # biz_type=stm_fld_batch.biz_type
+        # search = "%{}%".format(stm_fld_batch.biz_type)
+        # in103cr = session.query(model.t_IN103CR).where(Column('CODE').like(search)).first()
+        #
+        # to_update = {
+        #     "biz_type": in103cr.NAME,
+        # }
 
-        to_update = {
-            "biz_type": in103cr.NAME,
-        }
+        # pp(to_update)
 
-            # pp(to_update)
-
-        session.query(model.t_stm_fld_batch).filter(Column('id') == stm_fld_batch.id).update(to_update)
-        session.query(model.t_stm_fld).filter(Column('id') == stm_fld_batch.id).update(to_update)
+        # session.query(model.t_stm_fld_batch).filter(Column('id') == stm_fld_batch.id).update(to_update)
+        # session.query(model.t_stm_fld).filter(Column('id') == stm_fld_batch.id).update(to_update)
         # # session.query(model.t_stm_fld_batch).filter(Column('id') == stm_fld_batch.id).update({"db_processed": 1})
         session.commit()
+
+
+def compress_sido(sido):
+    if sido != '':
+        if re.search(r' ', sido, re.IGNORECASE):
+            sido = sido.split(' ')[0]
+        if re.search(r'시', sido[-1], re.IGNORECASE):
+            sido = sido[0:-1]
+        return sido
+
+
+def compress_capital_si(sido):
+    tmp = ""
+    if re.findall(r'충청', sido, re.IGNORECASE):
+        tmp += "충"
+    elif re.findall(r'전라', sido, re.IGNORECASE):
+        tmp += "전"
+    elif re.findall(r'경상', sido, re.IGNORECASE):
+        tmp += "경"
+
+    if re.findall(r'남도', sido, re.IGNORECASE):
+        tmp += "남"
+    elif re.findall(r'북도', sido, re.IGNORECASE):
+        tmp += "북"
+    sinm = tmp
+
+    if re.findall(r'서울', sido, re.IGNORECASE):
+        sinm = "서울"
+    elif re.findall(r'경기', sido, re.IGNORECASE):
+        sinm = "경기"
+    elif re.findall(r'인천', sido, re.IGNORECASE):
+        sinm = "인천"
+    elif re.findall(r'강원', sido, re.IGNORECASE):
+        sinm = "강원"
+    elif re.findall(r'제주', sido, re.IGNORECASE):
+        sinm = "제주"
+    elif re.findall(r'광주', sido, re.IGNORECASE):
+        sinm = "광주"
+    elif re.findall(r'대구', sido, re.IGNORECASE):
+        sinm = "대구"
+    elif re.findall(r'대전', sido, re.IGNORECASE):
+        sinm = "대전"
+    elif re.findall(r'울산', sido, re.IGNORECASE):
+        sinm = "울산"
+    elif re.findall(r'부산', sido, re.IGNORECASE):
+        sinm = "부산"
+    elif re.findall(r'세종', sido, re.IGNORECASE):
+        sinm = "세종"
+    elif re.findall(r'전북', sido, re.IGNORECASE):
+        sinm = "전북"
+    elif re.findall(r'전남', sido, re.IGNORECASE):
+        sinm = "전남"
+    elif re.findall(r'경북', sido, re.IGNORECASE):
+        sinm = "경북"
+    elif re.findall(r'경남', sido, re.IGNORECASE):
+        sinm = "경남"
+    elif re.findall(r'충북', sido, re.IGNORECASE):
+        sinm = "충북"
+    elif re.findall(r'충남', sido, re.IGNORECASE):
+        sinm = "충남"
+    return sinm
+
 
 def process():
     ApiConnectAddress()
