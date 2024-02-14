@@ -8,7 +8,7 @@ import json
 
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
-from sqlalchemy import Column, create_engine, text, desc
+from sqlalchemy import Column, create_engine, text, desc, or_
 from sqlalchemy.orm import sessionmaker
 
 from pprint import pprint as pp
@@ -43,12 +43,15 @@ def ApiConnectAddress():
     cover_datas = []
 
     res_all = (session.query(model.t_stm_fld_batch).filter(Column('address') != None)
-               .filter(Column('data_skip') == 0)
+               .filter(or_(Column('strct_cd_nm') == None, Column('strct_cd_nm') == ''))
+               # .filter(Column('data_skip') == 0)
+               # .filter(Column('id') == 663)
                .order_by(desc(Column('id')))
                .all())
 
     for rec in res_all:
         keyword = rec.address.split(',')[0]
+        keyword = keyword.split('(')[0]
         juso_reqdata = {
             "confmKey": JUSO_KEY,
             "currentPage": 1,
@@ -59,12 +62,18 @@ def ApiConnectAddress():
             "addInfoYn": 'N',
         }
 
-        response = requests.request("POST", JUSO_URL, data=juso_reqdata, timeout=int(JUSO_TIMEOUT) / 1000)
+        # pp(juso_reqdata)
+
+        response = requests.request("POST", JUSO_URL, data=juso_reqdata, timeout=10.0)
+        # pp(response)
         if response.status_code == 200:
             result_of_api = response.json().get('results').get('common').get('errorCode')
             totalCount = response.json().get('results').get('common').get('totalCount')
             # if result_of_api != '0' and totalCount > 0:
             juso_datas.append({"SEQ": rec.id, "response": response.json()})
+
+    # pp(juso_datas)
+    # exit()
 
     for juso_data in juso_datas:
         roadAddr = juso_data.get('response').get('results').get('juso')[0].get('roadAddr')

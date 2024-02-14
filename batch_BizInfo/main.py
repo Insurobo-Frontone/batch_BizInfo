@@ -8,7 +8,7 @@ import json
 
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
-from sqlalchemy import Column, create_engine, text, desc
+from sqlalchemy import Column, create_engine, text, desc, or_
 from sqlalchemy.orm import sessionmaker
 
 from pprint import pprint as pp
@@ -81,21 +81,24 @@ def ApiConnectAddress():
         olddt = datetime.fromtimestamp(temp_data)
         for_comparision = olddt + timedelta(milliseconds=int(COVER_TIMEOUT))
         nowdt = datetime.now()
-        if for_comparision >= nowdt:
-            sys.exit(1)
+        # if for_comparision >= nowdt:
+        #     sys.exit(1)
 
         juso_datas = []
         cover_datas = []
         res_all = (session.query(model.t_stm_fld_batch).filter(Column('address') != None)
-                   .filter(Column('db_processed') == 0)
-                   .filter(Column('data_processed') == 0)
-                   .filter(Column('data_skip') == 0)
+                   .filter(or_(Column('strct_cd_nm') == None, Column('strct_cd_nm') == ''))
+                   # .filter(Column('db_processed') == 0)
+                   # .filter(Column('data_processed') == 0)
+                   # .filter(Column('data_skip') == 0)
                    .order_by(desc(Column('id')))
                    # .limit(200)
                    .all())
 
         for rec in res_all:
             keyword = rec.address.split(',')[0]
+            keyword = keyword.split('(')[0]
+            # pp(keyword)
             juso_reqdata = {
                 "confmKey": JUSO_KEY,
                 "currentPage": 1,
@@ -113,7 +116,9 @@ def ApiConnectAddress():
                 # if result_of_api != '0' and totalCount > 0:
                 juso_datas.append({"SEQ": rec.id, "response": response.json()})
 
+
         for juso_data in juso_datas:
+            # pp(response.json())
             roadAddr = juso_data.get('response').get('results').get('juso')[0].get('roadAddr')
             jibunAddr = juso_data.get('response').get('results').get('juso')[0].get('jibunAddr')
             zipNo = juso_data.get('response').get('results').get('juso')[0].get('zipNo')
@@ -136,7 +141,7 @@ def ApiConnectAddress():
                 # "platGbCd": mtYn,  # mtYn
                 "bun": lnbrMnnm.rjust(4, '0'),  # lnbrMnnm
                 "ji": lnbrSlno.rjust(4, '0'),  # lnbrSlno
-                "zip": zipNo,
+                # "zip": zipNo,
                 # "startDate": startDate,  # YYYYMMDD
                 # "endDate": endDate,  # YYYYMMDD
                 "numOfRows": 10,  # 1
@@ -192,7 +197,7 @@ def data_process(data):
     if data.get("cover_response") == None:
         return
     stm_fld_batch = session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).filter(
-       Column('data_processed') == 0).first()
+        Column('data_processed') == 0).first()
     # stm_fld_batch = session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).first()
     if ((stm_fld_batch.address == None or stm_fld_batch.roadAddr == None) or (stm_fld_batch.zipCode == None) or (
             stm_fld_batch.bld_tot_lyr_num == None or stm_fld_batch.bld_tot_lyr_num == '' or int(
