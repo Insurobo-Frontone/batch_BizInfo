@@ -204,8 +204,8 @@ def data_process(data):
             "zipCode": data.get("zipcode"),
             "bld_tot_lyr_num": data.get("cover_response").get('grndFlrCnt'),
             "ugrnd_flr_cnt": data.get("cover_response").get('ugrndFlrCnt'),
-            "strct_cd_nm": data.get("cover_response").get('etcStrct'),
-            "roof_strc": data.get("cover_response").get('etcRoof'),
+            "strct_cd_nm": data.get("cover_response").get('strct_cd_nm'),
+            "roof_strc": data.get("cover_response").get('roof_strc'),
             "otwl_strc": data.get("cover_response").get('otwlStrc'),
             "data_processed": 1,
         }
@@ -256,12 +256,17 @@ def getSmallmainAtchGbCd(datas):
 def judge_structure(data):
     if data is None:
         return data
-    elif data["etcStrct"] is None:
-        etcStrct = data["strctCdNm"]
-    else:
+    elif data["strctCdNm"] is None:
         etcStrct = data["etcStrct"]
+    else:
+        etcStrct = data["strctCdNm"]
+    if data is None:
+        return data
+    elif data["roof_strc"] is None:
+        etcRoof = data["etcRoof"]
+    else:
+        etcRoof = data["roof_strc"]
 
-    # etcRoof = data["etcRoof"]
 
     # # // 기둥 판단
     # if len(re.findall(r'벽돌|조적', etcStrct, re.IGNORECASE)) > 0:
