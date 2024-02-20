@@ -64,8 +64,8 @@ def data_copy_for_batch():
            "a.termsA6 termsA6, a.termsA7 termsA7,a.imputation_reason_confirm_yn imputation_reason_confirm_yn, "
            "a.create_date create_date, a.termsA8 termsA8, a.difStmFldJoinYn difStmFldJoinYn,a.phoneNum phoneNum, "
            "a.birthDate birthDate, a.sex sex, a.jehuCd jehuCd, a.roadAddr roadAddr, a.zipCode zipCode, "
-           "a.squareMeter squareMeter, a.bunjiAddr bunjiAddr, a.capitalDo capitalDo,a.si si,  0 data_processed, "
-           "0 db_processed,"
+           "a.squareMeter squareMeter, a.bunjiAddr bunjiAddr, a.capitalDo capitalDo,a.si si, a.grade grade,  "
+           "0 data_processed, 0 db_processed,"
            "0 data_skip FROM stm_fld a LEFT JOIN stm_fld_batch b ON a.id = b.id WHERE b.id IS NULL GROUP BY a.id "
            "ORDER BY a.id")
     connection.execute(text(sql))
@@ -192,7 +192,7 @@ def data_process(data):
     if data.get("cover_response") == None:
         return
     stm_fld_batch = session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).filter(
-       Column('data_processed') == 0).first()
+        Column('data_processed') == 0).first()
     # stm_fld_batch = session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).first()
     if ((stm_fld_batch.address == None or stm_fld_batch.roadAddr == None) or (stm_fld_batch.zipCode == None) or (
             stm_fld_batch.bld_tot_lyr_num == None or stm_fld_batch.bld_tot_lyr_num == '' or int(
@@ -232,9 +232,12 @@ def get_cover(data):
                 and got_json['response']['body']['totalCount'] > 0):
             if type(got_json['response']['body']['items']['item']) is dict:
                 data["cover_response"] = judge_structure(got_json['response']['body']['items']['item'])
+                data["cover_response"] = judge_grade(data["cover_response"])
             elif type(response_cover.json()['response']['body']['items']['item']) is list:
                 data["cover_response"] = judge_structure(
                     getSmallmainAtchGbCd(got_json['response']['body']['items']['item']))
+                data["cover_response"] = judge_grade(data["cover_response"])
+            pp(data)
             return data
     except Exception as e:
         return False
@@ -253,20 +256,66 @@ def getSmallmainAtchGbCd(datas):
             return data
 
 
+def judge_grade(data):
+    # data['etcStrc']
+    # data['etcRoof']
+    # data['otwlStrc']
+    flag = 0
+    if len(re.findall(r'블록', data['etcStrc'], re.IGNORECASE)) > 0:
+        flag -= 1
+    elif len(re.findall(r'조적|내화|철근|철골|슬라브|콘크리트', data['etcStrc'], re.IGNORECASE)) > 0:
+        flag += 1
+    if len(re.findall(r'판넬|슬레트', data['etcRoof'], re.IGNORECASE)) > 0:
+        flag += 0
+    elif len(re.findall(r'조적|내화|철근|철골|슬라브', data['etcRoof'], re.IGNORECASE)) > 0:
+        flag += 1
+    if len(re.findall(r'조적|내화|철근|철골|슬라브|콘크리트', data['otwlStrc'], re.IGNORECASE)) > 0:
+        flag += 1
+
+    # 지하구분
+    if len(re.findall(r'지하|B', data['input_bld_st'], re.IGNORECASE)) > 0:
+        flag -= 1
+
+    if flag >= 3:
+        data['grade'] = "1등급"
+    elif flag == 2:
+        data['grade'] = "2등급"
+    elif flag == 1:
+        data['grade'] = "3등급"
+    else:
+        data['grade'] = "4등급"
+
+    return data
+
+    # if len(re.findall(r'벽돌|조적', etcStrct, re.IGNORECASE)) > 0:
+    #     otwlStrc = "벽돌(조직) 외벽"
+    # elif len(re.findall(r'블록|블럭', etcStrct, re.IGNORECASE)) > 0:
+    #     otwlStrc = "블록 외벽"
+    # elif len(re.findall(r'철판|판넬', etcStrct, re.IGNORECASE)) > 0:
+    #     otwlStrc = "철판 / 판넬"
+    # elif len(re.findall(r'목조', etcStrct, re.IGNORECASE)) > 0:
+    #     otwlStrc = "목조"
+    # elif len(re.findall(r'유리', etcStrct, re.IGNORECASE)) > 0:
+    #     otwlStrc = "유리벽"
+    # else:
+    #     otwlStrc = "콘크리트 외벽"  # etcStrct 값: 콘크리트, 철근, 시멘트, 시맨트, 기타
+
+    # data['otwlStrc'] = otwlStrc
+
+
 def judge_structure(data):
     if data is None:
         return data
-    elif data["strctCdNm"] is None:
+    elif data["etcStrct"] is None:
         etcStrct = data["etcStrct"]
     else:
         etcStrct = data["strctCdNm"]
     if data is None:
         return data
-    elif data["roof_strc"] is None:
+    elif data["etcRoof"] is None:
         etcRoof = data["etcRoof"]
     else:
         etcRoof = data["roof_strc"]
-
 
     # # // 기둥 판단
     # if len(re.findall(r'벽돌|조적', etcStrct, re.IGNORECASE)) > 0:

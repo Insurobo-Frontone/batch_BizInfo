@@ -207,6 +207,7 @@ t_stm_fld = Table(
     Column('squareMeter', DECIMAL(10, 2)),
     Column('capitalDo', String(100)),
     Column('si', String(100)),
+    Column('grade', String(10)),
 )
 
 t_stm_fld_batch = Table(
@@ -256,6 +257,7 @@ t_stm_fld_batch = Table(
     # Column('db_code_wall', String(100)),
     # Column('db_code_poll', String(100)),
     # Column('db_code_biztype', String(100)),
+    Column('grade', String(10)),
     Column('data_processed', TINYINT(1), server_default=text("'0'")),
     Column('db_processed', TINYINT(1), server_default=text("'0'")),
     Column('data_skip', TINYINT(1), server_default=text("'0'"))
