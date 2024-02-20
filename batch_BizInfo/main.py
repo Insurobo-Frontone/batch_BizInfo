@@ -52,7 +52,7 @@ def data_copy_for_batch():
            "roof_strc, otwl_strc, worker_num_standard_under_yn, worker_num, sales_standard_under_yn, "
            "sales, biz_no, termsA1, termsA2, termsA3, termsA4, termsA6, termsA7, imputation_reason_confirm_yn, "
            "create_date, termsA8, difStmFldJoinYn, phoneNum, birthDate, sex, jehuCd, roadAddr, zipCode, squareMeter, "
-           "bunjiAddr, capitalDo, si,"
+           "bunjiAddr, capitalDo, si, grade,"
            "data_processed,db_processed, data_skip) select a.id id, a.biz_name biz_name, a.ceo_name ceo_name, "
            "a.biz_type biz_type,a.building_division building_division,a.address `address`,a.detail_address "
            "detail_address,a.area area, "
@@ -87,12 +87,12 @@ def ApiConnectAddress():
         juso_datas = []
         cover_datas = []
         res_all = (session.query(model.t_stm_fld_batch).filter(Column('address') != None)
-                   .filter(or_(Column('strct_cd_nm') == None, Column('strct_cd_nm') == ''))
+                   # .filter(or_(Column('strct_cd_nm') == None, Column('strct_cd_nm') == ''))
                    # .filter(Column('db_processed') == 0)
                    # .filter(Column('data_processed') == 0)
                    # .filter(Column('data_skip') == 0)
                    .order_by(desc(Column('id')))
-                   # .limit(200)
+                   #.limit(200)
                    .all())
 
         for rec in res_all:
@@ -109,13 +109,12 @@ def ApiConnectAddress():
                 "addInfoYn": 'N',
             }
 
-            response = requests.request("POST", JUSO_URL, data=juso_reqdata, timeout=int(JUSO_TIMEOUT) / 1000)
+            response = requests.request("POST", JUSO_URL, data=juso_reqdata, timeout=15.0)
             if response.status_code == 200:
                 result_of_api = response.json().get('results').get('common').get('errorCode')
                 totalCount = response.json().get('results').get('common').get('totalCount')
                 # if result_of_api != '0' and totalCount > 0:
                 juso_datas.append({"SEQ": rec.id, "response": response.json()})
-
 
         for juso_data in juso_datas:
             # pp(response.json())
@@ -144,7 +143,7 @@ def ApiConnectAddress():
                 # "zip": zipNo,
                 # "startDate": startDate,  # YYYYMMDD
                 # "endDate": endDate,  # YYYYMMDD
-                "numOfRows": 10,  # 1
+                "numOfRows": 100,  # 1
                 # "pageNo": 1,  # 1
                 "_type": "json",
             }
@@ -199,7 +198,8 @@ def data_process(data):
     stm_fld_batch = session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).filter(
         Column('data_processed') == 0).first()
     # stm_fld_batch = session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).first()
-    if ((stm_fld_batch.address == None or stm_fld_batch.roadAddr == None) or (stm_fld_batch.zipCode == None) or (
+    if (True or (stm_fld_batch.address == None or stm_fld_batch.roadAddr == None) or (
+            stm_fld_batch.zipCode == None) or (
             stm_fld_batch.bld_tot_lyr_num == None or stm_fld_batch.bld_tot_lyr_num == '' or int(
         stm_fld_batch.bld_tot_lyr_num) == 0) or (stm_fld_batch.strct_cd_nm == None) or (
             stm_fld_batch.roof_strc == None) or (stm_fld_batch.otwl_strc == None or stm_fld_batch.otwl_strc == False)):
@@ -216,6 +216,9 @@ def data_process(data):
         }
         session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).filter(
             Column('data_processed') == 0).update(to_update)
+        grade = judge_grade(data.get("cover_response"))
+        to_update = {"grade": grade}
+        session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).update(to_update)
         # session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).update(to_update)
         #
         # session.commit()
@@ -230,19 +233,17 @@ def data_process(data):
 
 def get_cover(data):
     response_cover = requests.request("GET", COVER_URL, params=data.get('cover_reqdata'),
-                                      timeout=int(COVER_TIMEOUT) / 100)
+                                      timeout=15.0)
     try:
         got_json = response_cover.json()
         if (type(got_json['response']['body']['items']) is dict
                 and got_json['response']['body']['totalCount'] > 0):
             if type(got_json['response']['body']['items']['item']) is dict:
                 data["cover_response"] = judge_structure(got_json['response']['body']['items']['item'])
-                data["cover_response"] = judge_grade(data["cover_response"])
             elif type(response_cover.json()['response']['body']['items']['item']) is list:
                 data["cover_response"] = judge_structure(
                     getSmallmainAtchGbCd(got_json['response']['body']['items']['item']))
-                data["cover_response"] = judge_grade(data["cover_response"])
-            pp(data)
+
             return data
     except Exception as e:
         return False
@@ -265,32 +266,47 @@ def judge_grade(data):
     # data['etcStrc']
     # data['etcRoof']
     # data['otwlStrc']
+    if data is None:
+        return None
+
+    etcStrct = data.get('etcStrct')
+    etcRoof = data.get('etcRoof')
+    otwlStrc = data.get('otwlStrc')
+
+    if etcStrct is None or etcRoof is None or otwlStrc is None:
+        return None
+
     flag = 0
-    if len(re.findall(r'블록', data['etcStrc'], re.IGNORECASE)) > 0:
-        flag -= 1
-    elif len(re.findall(r'조적|내화|철근|철골|슬라브|콘크리트', data['etcStrc'], re.IGNORECASE)) > 0:
-        flag += 1
-    if len(re.findall(r'판넬|슬레트', data['etcRoof'], re.IGNORECASE)) > 0:
-        flag += 0
-    elif len(re.findall(r'조적|내화|철근|철골|슬라브', data['etcRoof'], re.IGNORECASE)) > 0:
-        flag += 1
-    if len(re.findall(r'조적|내화|철근|철골|슬라브|콘크리트', data['otwlStrc'], re.IGNORECASE)) > 0:
-        flag += 1
+
+    if len(re.findall(r'블록|브럭|철골', etcStrct, re.IGNORECASE)) > 0:
+        flag = flag - 1
+    elif len(re.findall(r'조적|내화|철근|슬라브|콘크리트', etcStrct, re.IGNORECASE)) > 0:
+        flag = flag + 1
+    if len(re.findall(r'판넬|슬레트|슬레이트', etcRoof, re.IGNORECASE)) > 0:
+        flag = flag + 0
+    elif len(re.findall(r'조적|내화|철근|슬라브|스라브', etcRoof, re.IGNORECASE)) > 0:
+        flag = flag + 1
+    if len(re.findall(r'조적|내화|철근|슬라브|콘크리트', otwlStrc, re.IGNORECASE)) > 0:
+        flag = flag + 1
 
     # 지하구분
-    if len(re.findall(r'지하|B', data['input_bld_st'], re.IGNORECASE)) > 0:
-        flag -= 1
+    input_bld_st = data.get('input_bld_st')
+    if input_bld_st is None:
+        input_bld_st = '1'
+
+    if len(re.findall(r'B|지하', input_bld_st, re.IGNORECASE)) > 0:
+        flag = flag - 1
 
     if flag >= 3:
-        data['grade'] = "1등급"
+        grade = "1등급"
     elif flag == 2:
-        data['grade'] = "2등급"
+        grade = "2등급"
     elif flag == 1:
-        data['grade'] = "3등급"
+        grade = "3등급"
     else:
-        data['grade'] = "4등급"
+        grade = "4등급"
 
-    return data
+    return grade
 
     # if len(re.findall(r'벽돌|조적', etcStrct, re.IGNORECASE)) > 0:
     #     otwlStrc = "벽돌(조직) 외벽"
@@ -311,32 +327,16 @@ def judge_grade(data):
 def judge_structure(data):
     if data is None:
         return data
-    elif data["etcStrct"] is None:
-        etcStrct = data["etcStrct"]
-    else:
-        etcStrct = data["strctCdNm"]
-    if data is None:
-        return data
-    elif data["etcRoof"] is None:
-        etcRoof = data["etcRoof"]
-    else:
-        etcRoof = data["roof_strc"]
 
-    # # // 기둥 판단
-    # if len(re.findall(r'벽돌|조적', etcStrct, re.IGNORECASE)) > 0:
-    #     poleStrc = "벽돌조"
-    # elif len(re.findall(r'블록|블럭', etcStrct, re.IGNORECASE)) > 0:
-    #     poleStrc = "블럭조"
-    # elif len(re.findall(r'경량철골|철골|H빔|에이치빔', etcStrct, re.IGNORECASE)) > 0:
-    #     poleStrc = "철골"
-    # elif len(re.findall(r'목조', etcStrct, re.IGNORECASE)) > 0:
-    #     poleStrc = "목조"
-    # elif len(re.findall(r'철파이프', etcStrct, re.IGNORECASE)) > 0:
-    #     poleStrc = "철파이프조"
+    if data.get("strctCdNm") is None:
+        etcStrct = data.get("etcStrct")
+    else:
+        etcStrct = data.get("strctCdNm")
+
+    # if data["etcRoof"] is None:
+    #     etcRoof = data["etcRoof"]
     # else:
-    #     poleStrc = "콘크리트조"  # etcStrct 값: 콘크리트, 철근, 시멘트, 시맨트, 기타
-    #
-    # data['poleStrc'] = poleStrc
+    #     etcRoof = data["roof_strc"]
 
     # // 외벽 판단
     if len(re.findall(r'벽돌|조적', etcStrct, re.IGNORECASE)) > 0:
@@ -353,6 +353,23 @@ def judge_structure(data):
         otwlStrc = "콘크리트 외벽"  # etcStrct 값: 콘크리트, 철근, 시멘트, 시맨트, 기타
 
     data['otwlStrc'] = otwlStrc
+
+    return data
+    # # // 기둥 판단
+    # if len(re.findall(r'벽돌|조적', etcStrct, re.IGNORECASE)) > 0:
+    #     poleStrc = "벽돌조"
+    # elif len(re.findall(r'블록|블럭', etcStrct, re.IGNORECASE)) > 0:
+    #     poleStrc = "블럭조"
+    # elif len(re.findall(r'경량철골|철골|H빔|에이치빔', etcStrct, re.IGNORECASE)) > 0:
+    #     poleStrc = "철골"
+    # elif len(re.findall(r'목조', etcStrct, re.IGNORECASE)) > 0:
+    #     poleStrc = "목조"
+    # elif len(re.findall(r'철파이프', etcStrct, re.IGNORECASE)) > 0:
+    #     poleStrc = "철파이프조"
+    # else:
+    #     poleStrc = "콘크리트조"  # etcStrct 값: 콘크리트, 철근, 시멘트, 시맨트, 기타
+    #
+    # data['poleStrc'] = poleStrc
     #
     # # 지붕 판단
     # if len(re.findall(r'철판|판넬', etcRoof, re.IGNORECASE)) > 0:
@@ -367,8 +384,6 @@ def judge_structure(data):
     #     roofStrc = "콘크리트 지붕"  # // etcRoof 값: 콘크리트, 철근, 슬래브, 슬라브, 기타
     #
     # data['roofStrc'] = roofStrc
-
-    return data
 
 
 def process():

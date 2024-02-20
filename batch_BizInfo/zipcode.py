@@ -64,7 +64,7 @@ def ApiConnectAddress():
 
         # pp(juso_reqdata)
 
-        response = requests.request("POST", JUSO_URL, data=juso_reqdata, timeout=10.0)
+        response = requests.request("POST", JUSO_URL, data=juso_reqdata, timeout=15.0)
         # pp(response)
         if response.status_code == 200:
             result_of_api = response.json().get('results').get('common').get('errorCode')
