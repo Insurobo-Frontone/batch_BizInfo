@@ -186,6 +186,7 @@ def db_process(t_stm_fld_batch):
         "ugrnd_flr_cnt": stm_fld_batch.ugrnd_flr_cnt,
         "strct_cd_nm": stm_fld_batch.strct_cd_nm,
         "roof_strc": stm_fld_batch.roof_strc,
+        "otwl_strc": stm_fld_batch.otwl_strc,
         "geade": stm_fld_batch.grade,
     }
     session.query(model.t_stm_fld).filter(Column('id') == stm_fld_batch.id).update(to_update)
