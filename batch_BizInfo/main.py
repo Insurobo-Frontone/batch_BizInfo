@@ -52,7 +52,7 @@ def data_copy_for_batch():
            "roof_strc, otwl_strc, worker_num_standard_under_yn, worker_num, sales_standard_under_yn, "
            "sales, biz_no, termsA1, termsA2, termsA3, termsA4, termsA6, termsA7, imputation_reason_confirm_yn, "
            "create_date, termsA8, difStmFldJoinYn, phoneNum, birthDate, sex, jehuCd, roadAddr, zipCode, squareMeter, "
-           "bunjiAddr, capitalDo, si, grade,"
+           "bunjiAddr, capitalDo, si, grade, etcRoof, etcStrct"
            "data_processed,db_processed, data_skip) select a.id id, a.biz_name biz_name, a.ceo_name ceo_name, "
            "a.biz_type biz_type,a.building_division building_division,a.address `address`,a.detail_address "
            "detail_address,a.area area, "
@@ -65,7 +65,7 @@ def data_copy_for_batch():
            "a.create_date create_date, a.termsA8 termsA8, a.difStmFldJoinYn difStmFldJoinYn,a.phoneNum phoneNum, "
            "a.birthDate birthDate, a.sex sex, a.jehuCd jehuCd, a.roadAddr roadAddr, a.zipCode zipCode, "
            "a.squareMeter squareMeter, a.bunjiAddr bunjiAddr, a.capitalDo capitalDo,a.si si, a.grade grade,  "
-           "0 data_processed, 0 db_processed,"
+           "a.etcStrct etcStrct, a.etcRoof etcRoof,0 data_processed, 0 db_processed,"
            "0 data_skip FROM stm_fld a LEFT JOIN stm_fld_batch b ON a.id = b.id WHERE b.id IS NULL GROUP BY a.id "
            "ORDER BY a.id")
     connection.execute(text(sql))
@@ -92,7 +92,7 @@ def ApiConnectAddress():
                    # .filter(Column('data_processed') == 0)
                    # .filter(Column('data_skip') == 0)
                    .order_by(desc(Column('id')))
-                   # .limit(200)
+                   .limit(20)
                    .all())
 
         for rec in res_all:
@@ -187,7 +187,7 @@ def db_process(t_stm_fld_batch):
         "strct_cd_nm": stm_fld_batch.strct_cd_nm,
         "roof_strc": stm_fld_batch.roof_strc,
         "otwl_strc": stm_fld_batch.otwl_strc,
-        "geade": stm_fld_batch.grade,
+        "grade": stm_fld_batch.grade,
     }
     session.query(model.t_stm_fld).filter(Column('id') == stm_fld_batch.id).update(to_update)
     session.query(model.t_stm_fld_batch).filter(Column('id') == stm_fld_batch.id).update({"db_processed": 1})
@@ -215,12 +215,14 @@ def data_process(data):
             "strct_cd_nm": data.get("cover_response").get('strctCdNm'),
             "roof_strc": data.get("cover_response").get('roofCdNm'),
             "otwl_strc": data.get("cover_response").get('otwlStrc'),
+            "etcRoof": data.get("cover_response").get('etcRoof'),
+            "etcStrct": data.get("cover_response").get('etcStrct'),
             # "data_processed": 1,
         }
         session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).update(to_update)
         # session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).filter(
         #     Column('data_processed') == 0).update(to_update)
-        grade = judge_grade(data.get("cover_response"))
+        grade = judge_grade(session, data.get('SEQ'))
         to_update2 = {"grade": grade}
         session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).update(to_update2)
         # session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).update(to_update)
@@ -266,53 +268,68 @@ def getSmallmainAtchGbCd(datas):
             return data
 
 
-def judge_grade(data):
+def judge_grade(session, SEQ):
     # data['etcStrc']
     # data['etcRoof']
     # data['otwlStrc']
-    if data is None:
-        return None
+    data = session.query(model.t_stm_fld_batch).filter(Column('id') == SEQ).first()
 
-    etcStrct = data.get('strct_cd_nm')
-    etcRoof = data.get('roof_strc')
-    otwlStrc = data.get('otwlStrc')
+    # etcStrct = data.strct_cd_nm
+    # etcRoof = data.roof_strc
+    otwlStrc = data.otwl_strc
+    etcStrct = data.etcStrct
+    etcRoof = data.etcRoof
+    # etcStrct = data.get('strct_cd_nm')
+    # etcRoof = data.get('roof_strc')
+    # otwlStrc = data.get('otwlStrc')
 
     flag = 0
-    strong = ["철근", "조적", "내화", "철골보", "철골기둥", "슬라브", "난연"]
-    unable = ["판넬", "슬레트", "블록", "브럭", "철골", "철골판넬", "벽돌", "콘크리트", "석재", "기와", "석면판", "철강", "유리", "몰타르", "아스팔트"]
+
+    strong = ["철근", "조적", "내화", "철골보", "철골기둥", "슬라브",
+              "스라브", "스라부", "슬래브", "난연", "철근콘크리트", " 콘크리트 외벽", "(철근)콘크리트"]
+    unable = ["판넬", "슬레트", "블록", "블럭", "브록", "브럭", "철골", "철골판넬", "벽돌", "콘크리트", "석재", "기와", "석면판", "철강", "유리", "몰타르",
+              "아스팔트"]
     week = ["나무", "천막"]
 
-    if len(re.findall(unable, etcStrct,
-                      re.IGNORECASE)) > 0:  # if len(re.findall(r'블록|브럭|철골', etcStrct, re.IGNORECASE)) > 0:
-        flag = flag + 0
-    elif len(re.findall(strong, etcStrct,
-                      re.IGNORECASE)) > 0:  # len(re.findall(r'조적|내화|철근|슬라브|콘크리트', etcStrct, re.IGNORECASE)) > 0:
-        flag = flag + 1
+    strong_join = "|".join(strong)
+    unable_join = "|".join(unable)
+    week_join = "|".join(week)
 
-    if len(re.findall(unable, etcRoof,
-                      re.IGNORECASE)) > 0:  # len(re.findall(r'판넬|슬레트|슬레이트|벽돌', etcRoof, re.IGNORECASE)) > 0:
+    strong_combined = "(r'" + strong_join + "')"
+    unable_combined = "(r'" + unable_join + "')"
+    week_combined = "(r'" + week_join + "')"
+
+    if len(re.findall(strong_combined, etcStrct,
+                      re.IGNORECASE)) > 0:
+        flag = flag + 1
+    elif len(re.findall(unable_combined, etcStrct,
+                        re.IGNORECASE)) > 0:
         flag = flag + 0
-    elif len(re.findall(strong, etcRoof,
+
+    if len(re.findall(strong_combined, etcRoof,
                       re.IGNORECASE)) > 0:  # len(re.findall(r'조적|내화|철근|슬라브|스라브', etcRoof, re.IGNORECASE)) > 0:
         flag = flag + 1
-
-    if len(re.findall(unable, etcRoof, re.IGNORECASE)) > 0:
+    elif len(re.findall(unable_combined, etcRoof,
+                        re.IGNORECASE)) > 0:  # len(re.findall(r'판넬|슬레트|슬레이트|벽돌', etcRoof, re.IGNORECASE)) > 0:
         flag = flag + 0
-    elif len(re.findall(strong, otwlStrc, re.IGNORECASE)) > 0:
+
+    if len(re.findall(unable_combined, otwlStrc, re.IGNORECASE)) > 0:
+        flag = flag + 0
+    elif len(re.findall(strong_combined, otwlStrc, re.IGNORECASE)) > 0:
         flag = flag + 1
 
-    input_bld_st = data.get('input_bld_st')
+    input_bld_st = data.input_bld_st  # data.get('input_bld_st')
     if input_bld_st is None:
         input_bld_st = '1'
-    input_bld_ed = data.get('input_bld_st')
+    input_bld_ed = data.input_bld_ed  # data.get('input_bld_st')
     if input_bld_ed is None:
         input_bld_ed = '1'
 
-    if len(re.findall(week, etcRoof, re.IGNORECASE)) > 0:
+    if len(re.findall(week_combined, etcRoof, re.IGNORECASE)) > 0:
         flag = 0
-    elif len(re.findall(week, otwlStrc, re.IGNORECASE)) > 0:
+    elif len(re.findall(week_combined, otwlStrc, re.IGNORECASE)) > 0:
         flag = 0
-    elif len(re.findall(week, etcStrct, re.IGNORECASE)) > 0:
+    elif len(re.findall(week_combined, etcStrct, re.IGNORECASE)) > 0:
         flag = 0
 
     # 지하구분
@@ -321,13 +338,22 @@ def judge_grade(data):
     elif len(re.findall(r'B|지하', input_bld_ed, re.IGNORECASE)) > 0:
         flag = 2
 
+    # 조적조 브럭 처리
+    # 조적조(브럭조)
+    if len(re.findall(r'조적조(브럭조)', etcStrct, re.IGNORECASE)) > 0:
+        flag = 1
+    elif len(re.findall(r'조적조(브럭조)', etcRoof, re.IGNORECASE)) > 0:
+        flag = 1
+    elif len(re.findall(r'조적조(브럭조)', otwlStrc, re.IGNORECASE)) > 0:
+        flag = 1
+
     # 시장구분
     if len(re.findall(r'시장', input_bld_st, re.IGNORECASE)) > 0:
-        flag = 2
+        flag = 0
     elif len(re.findall(r'시장', input_bld_ed, re.IGNORECASE)) > 0:
-        flag = 2
+        flag = 0
 
-    detail_address = data.get('detail_address')
+    detail_address = data.detail_address  # data.get('detail_address')
     if detail_address is None:
         detail_address = '1'
     if len(re.findall(r'시장', detail_address, re.IGNORECASE)) > 0:
@@ -364,19 +390,15 @@ def judge_structure(data):
     if data is None:
         return data
 
-    if data.get("etcStrct") is None:
-        etcStrct = data.get("strctCdNm")
-        data['strctCdNm'] = etcStrct
-    else:
+    if data.get("strctCdNm") is None:
         etcStrct = data.get("etcStrct")
-        data['strctCdNm'] = etcStrct
-
-    if data.get('etcRoof') is None:
-        etcRoof = data.get("roofCdNm")
-        data['roofCdNm'] = etcRoof
     else:
+        etcStrct = data.get("strctCdNm")
+
+    if data.get('roofCdNm') is None:
         etcRoof = data.get("etcRoof")
-        data['roofCdNm'] = etcRoof
+    else:
+        etcRoof = data.get("roofCdNm")
 
     # // 외벽 판단
     if len(re.findall(r'벽돌|조적', etcStrct, re.IGNORECASE)) > 0:
