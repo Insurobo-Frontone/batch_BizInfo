@@ -52,7 +52,7 @@ def data_copy_for_batch():
            "roof_strc, otwl_strc, worker_num_standard_under_yn, worker_num, sales_standard_under_yn, "
            "sales, biz_no, termsA1, termsA2, termsA3, termsA4, termsA6, termsA7, imputation_reason_confirm_yn, "
            "create_date, termsA8, difStmFldJoinYn, phoneNum, birthDate, sex, jehuCd, roadAddr, zipCode, squareMeter, "
-           "bunjiAddr, capitalDo, si, grade, etcRoof, etcStrct"
+           "bunjiAddr, capitalDo, si, grade, etcRoof, etcStrct, "
            "data_processed,db_processed, data_skip) select a.id id, a.biz_name biz_name, a.ceo_name ceo_name, "
            "a.biz_type biz_type,a.building_division building_division,a.address `address`,a.detail_address "
            "detail_address,a.area area, "
@@ -92,7 +92,7 @@ def ApiConnectAddress():
                    # .filter(Column('data_processed') == 0)
                    # .filter(Column('data_skip') == 0)
                    .order_by(desc(Column('id')))
-                   .limit(20)
+                   # .limit(10)
                    .all())
 
         for rec in res_all:
@@ -286,9 +286,10 @@ def judge_grade(session, SEQ):
     flag = 0
 
     strong = ["철근", "조적", "내화", "철골보", "철골기둥", "슬라브",
-              "스라브", "스라부", "슬래브", "난연", "철근콘크리트", " 콘크리트 외벽", "(철근)콘크리트"]
-    unable = ["판넬", "슬레트", "블록", "블럭", "브록", "브럭", "철골", "철골판넬", "벽돌", "콘크리트", "석재", "기와", "석면판", "철강", "유리", "몰타르",
-              "아스팔트"]
+              "스라브", "스라부", "슬래브", "난연", "철근콘크리트", "철근콘크리트 구조",
+              "콘크리트 외벽", "(철근)콘크리트", "벽돌", "육즙", "평옥개", "R.C조", "철콘", "세벽"]
+    unable = ["판넬", "슬레트", "블록", "블럭", "브록", "브럭", "철골", "철골판넬", "콘크리트",
+              "석재", "기와", "석면판", "철강", "유리", "몰타르", "아스팔트", "와", "강판"]
     week = ["나무", "천막"]
 
     strong_join = "|".join(strong)
@@ -313,10 +314,10 @@ def judge_grade(session, SEQ):
                         re.IGNORECASE)) > 0:  # len(re.findall(r'판넬|슬레트|슬레이트|벽돌', etcRoof, re.IGNORECASE)) > 0:
         flag = flag + 0
 
-    if len(re.findall(unable_combined, otwlStrc, re.IGNORECASE)) > 0:
-        flag = flag + 0
-    elif len(re.findall(strong_combined, otwlStrc, re.IGNORECASE)) > 0:
+    if len(re.findall(strong_combined, otwlStrc, re.IGNORECASE)) > 0:
         flag = flag + 1
+    elif len(re.findall(unable_combined, otwlStrc, re.IGNORECASE)) > 0:
+        flag = flag + 0
 
     input_bld_st = data.input_bld_st  # data.get('input_bld_st')
     if input_bld_st is None:
@@ -340,11 +341,11 @@ def judge_grade(session, SEQ):
 
     # 조적조 브럭 처리
     # 조적조(브럭조)
-    if len(re.findall(r'조적조(브럭조)', etcStrct, re.IGNORECASE)) > 0:
+    if len(re.findall((r'블록조|블럭조|브럭조|브록조|보록조'), etcStrct, re.IGNORECASE)) > 0:
         flag = 1
-    elif len(re.findall(r'조적조(브럭조)', etcRoof, re.IGNORECASE)) > 0:
+    if len(re.findall((r'블록조|블럭조|브럭조|브록조|보록조'), etcRoof, re.IGNORECASE)) > 0:
         flag = 1
-    elif len(re.findall(r'조적조(브럭조)', otwlStrc, re.IGNORECASE)) > 0:
+    if len(re.findall((r'블록조|블럭조|브럭조|브록조|보록조'), otwlStrc, re.IGNORECASE)) > 0:
         flag = 1
 
     # 시장구분
