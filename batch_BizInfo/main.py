@@ -163,7 +163,7 @@ def restore_to_origin():
         Column('data_processed') == 1).filter(
         Column('data_skip') == 0).all()
 
-    # list(map(db_process, res_all))
+    list(map(db_process, res_all))
 
 
 def db_process(t_stm_fld_batch):
