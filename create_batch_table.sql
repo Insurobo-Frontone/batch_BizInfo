@@ -38,6 +38,9 @@ CREATE TABLE `stm_fld_batch` (
   `bunjiAddr` varchar(100) DEFAULT NULL COMMENT '법정동 주소'
   `zipCode` varchar(100) DEFAULT NULL,
   `squareMeter` decimal(10,2) DEFAULT NULL,
+  `grade` varchar(10) DEFAULT NULL,
+  `etcStrct` varchar(100) DEFAULT NULL,
+  `etcRoof` varchar(100) DEFAULT NULL,
   `data_processed` tinyint(1) DEFAULT 0,
   `db_processed` tinyint(1) DEFAULT 0,
   `data_skip` tinyint(1) DEFAULT 0,
