@@ -69,8 +69,8 @@ def data_copy_for_batch():
            "0 data_skip FROM stm_fld a LEFT JOIN stm_fld_batch b ON a.id = b.id WHERE b.id IS NULL GROUP BY a.id "
            "ORDER BY a.id")
     connection.execute(text(sql))
-    skip_sql = "update stm_fld_batch set data_skip = 1 where address is null"
-    connection.execute(text(skip_sql))
+    # skip_sql = "update stm_fld_batch set data_skip = 1 where address is null"
+    # connection.execute(text(skip_sql))
     result = connection.commit()
 
 
@@ -91,7 +91,7 @@ def ApiConnectAddress():
                    .filter(Column('data_processed') == 0)
                    .filter(Column('data_skip') == 0)
                    .order_by(desc(Column('id')))
-                   # .limit(200)
+                   .limit(200)
                    .all())
 
         for rec in res_all:
