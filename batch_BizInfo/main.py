@@ -65,7 +65,7 @@ def data_copy_for_batch():
            "a.create_date create_date, a.termsA8 termsA8, a.difStmFldJoinYn difStmFldJoinYn,a.phoneNum phoneNum, "
            "a.birthDate birthDate, a.sex sex, a.jehuCd jehuCd, a.roadAddr roadAddr, a.zipCode zipCode, "
            "a.squareMeter squareMeter, a.bunjiAddr bunjiAddr, a.capitalDo capitalDo,a.si si, a.etcStrct etcStrct, "
-           "a.etcRoof etcRoof, a.grade grade  0 data_processed,"
+           "a.etcRoof etcRoof, a.grade grade,  0 data_processed,"
            "0 db_processed,"
            "0 data_skip FROM stm_fld a LEFT JOIN stm_fld_batch b ON a.id = b.id WHERE b.id IS NULL GROUP BY a.id "
            "ORDER BY a.id")
