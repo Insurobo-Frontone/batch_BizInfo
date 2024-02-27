@@ -219,10 +219,11 @@ def data_process(data):
             Column('data_processed') == 0).update(to_update)
         # session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).filter(
         #     Column('data_processed') == 0).update(to_update)
-        grade = judge_grade(data.get("cover_response"))
+        grade = judge_grade(session, data.get('SEQ'))
         to_update2 = {"grade": grade}
         session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).update(to_update2)
-
+        # session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).update(to_update)
+        #
         # session.commit()
         # if stm_fld_batch.zipCode == None or stm_fld_batch.zipCode == '':
         #     to_update_zip = {
@@ -262,10 +263,14 @@ def getSmallmainAtchGbCd(datas):
             # pp(data)
             return data
 
-def judge_grade(data):
-    if data is None:
-        return None
+def judge_grade(session, SEQ):
+    # data['etcStrc']
+    # data['etcRoof']
+    # data['otwlStrc']
+    data = session.query(model.t_stm_fld_batch).filter(Column('id') == SEQ).first()
 
+    # etcStrct = data.strct_cd_nm
+    # etcRoof = data.roof_strc
     otwlStrc = data.otwl_strc
     etcStrct = data.etcStrct
     etcRoof = data.etcRoof
@@ -274,6 +279,9 @@ def judge_grade(data):
 
     if data.etcRoof is None or data.etcRoof == '':
         etcRoof = data.roof_strc
+    # etcStrct = data.get('strct_cd_nm')
+    # etcRoof = data.get('roof_strc')
+    # otwlStrc = data.get('otwlStrc')
 
     flag = 0
 
@@ -303,10 +311,7 @@ def judge_grade(data):
         else:
             flag = flag + 0
 
-    if len(re.findall(unable, etcRoof,
-                      re.IGNORECASE)) > 0:  # len(re.findall(r'판넬|슬레트|슬레이트|벽돌', etcRoof, re.IGNORECASE)) > 0:
-        flag = flag + 0
-    elif len(re.findall(strong, etcRoof,
+    if len(re.findall(strong_combined, etcRoof,
                       re.IGNORECASE)) > 0:  # len(re.findall(r'조적|내화|철근|슬라브|스라브', etcRoof, re.IGNORECASE)) > 0:
         flag = flag + 1
     elif len(re.findall(unable_combined, etcRoof,
@@ -316,15 +321,15 @@ def judge_grade(data):
         else:
             flag = flag + 0
 
-    if len(re.findall(unable, etcRoof, re.IGNORECASE)) > 0:
-        flag = flag + 0
-    elif len(re.findall(strong, otwlStrc, re.IGNORECASE)) > 0:
+    if len(re.findall(strong_combined, otwlStrc, re.IGNORECASE)) > 0:
         flag = flag + 1
+    elif len(re.findall(unable_combined, otwlStrc, re.IGNORECASE)) > 0:
+        flag = flag + 0
 
-    input_bld_st = data.get('input_bld_st')
+    input_bld_st = data.input_bld_st  # data.get('input_bld_st')
     if input_bld_st is None:
         input_bld_st = '1'
-    input_bld_ed = data.get('input_bld_st')
+    input_bld_ed = data.input_bld_ed  # data.get('input_bld_st')
     if input_bld_ed is None:
         input_bld_ed = '1'
 
@@ -332,7 +337,7 @@ def judge_grade(data):
         flag = 0
     if len(re.findall(week_combined, etcRoof, re.IGNORECASE)) > 0:
         flag = 0
-    elif len(re.findall(week, otwlStrc, re.IGNORECASE)) > 0:
+    elif len(re.findall(week_combined, otwlStrc, re.IGNORECASE)) > 0:
         flag = 0
 
     # 지하구분
@@ -352,11 +357,11 @@ def judge_grade(data):
 
     # 시장구분
     if len(re.findall(r'시장', input_bld_st, re.IGNORECASE)) > 0:
-        flag = 2
+        flag = 0
     elif len(re.findall(r'시장', input_bld_ed, re.IGNORECASE)) > 0:
-        flag = 2
+        flag = 0
 
-    detail_address = data.get('detail_address')
+    detail_address = data.detail_address  # data.get('detail_address')
     if detail_address is None:
         detail_address = '1'
     if len(re.findall(r'시장', detail_address, re.IGNORECASE)) > 0:
@@ -372,6 +377,22 @@ def judge_grade(data):
         grade = "4등급"
 
     return grade
+
+    # if len(re.findall(r'벽돌|조적', etcStrct, re.IGNORECASE)) > 0:
+    #     otwlStrc = "벽돌(조직) 외벽"
+    # elif len(re.findall(r'블록|블럭', etcStrct, re.IGNORECASE)) > 0:
+    #     otwlStrc = "블록 외벽"
+    # elif len(re.findall(r'철판|판넬', etcStrct, re.IGNORECASE)) > 0:
+    #     otwlStrc = "철판 / 판넬"
+    # elif len(re.findall(r'목조', etcStrct, re.IGNORECASE)) > 0:
+    #     otwlStrc = "목조"
+    # elif len(re.findall(r'유리', etcStrct, re.IGNORECASE)) > 0:
+    #     otwlStrc = "유리벽"
+    # else:
+    #     otwlStrc = "콘크리트 외벽"  # etcStrct 값: 콘크리트, 철근, 시멘트, 시맨트, 기타
+
+    # data['otwlStrc'] = otwlStrc
+
 
 def judge_structure(data):
     if data is None:
@@ -433,6 +454,7 @@ def judge_structure(data):
     #     roofStrc = "콘크리트 지붕"  # // etcRoof 값: 콘크리트, 철근, 슬래브, 슬라브, 기타
     #
     # data['roofStrc'] = roofStrc
+
 
 def process():
     check_and_create()
