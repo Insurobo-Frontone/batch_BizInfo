@@ -200,7 +200,8 @@ def data_process(data):
     if ((stm_fld_batch.address == None or stm_fld_batch.roadAddr == None) or (stm_fld_batch.zipCode == None) or (
             stm_fld_batch.bld_tot_lyr_num == None or stm_fld_batch.bld_tot_lyr_num == '' or int(
         stm_fld_batch.bld_tot_lyr_num) == 0) or (stm_fld_batch.strct_cd_nm == None) or (
-            stm_fld_batch.roof_strc == None) or (stm_fld_batch.otwl_strc == None or stm_fld_batch.otwl_strc == False)):
+            stm_fld_batch.roof_strc == None) or (stm_fld_batch.otwl_strc == None or stm_fld_batch.otwl_strc == False)
+            or (stm_fld_batch.grade == None or stm_fld_batch.grade == '')):
         to_update = {
             "bunjiAddr": data.get("jibunAddr"),
             "roadAddr": data.get("roadAddr"),
