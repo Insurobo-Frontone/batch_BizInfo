@@ -52,7 +52,7 @@ def data_copy_for_batch():
            "roof_strc, otwl_strc, worker_num_standard_under_yn, worker_num, sales_standard_under_yn, "
            "sales, biz_no, termsA1, termsA2, termsA3, termsA4, termsA6, termsA7, imputation_reason_confirm_yn, "
            "create_date, termsA8, difStmFldJoinYn, phoneNum, birthDate, sex, jehuCd, roadAddr, zipCode, squareMeter, "
-           "bunjiAddr, capitalDo, si,"
+           "bunjiAddr, capitalDo, si, etcStrct, etcRoof, grade"
            "data_processed,db_processed, data_skip) select a.id id, a.biz_name biz_name, a.ceo_name ceo_name, "
            "a.biz_type biz_type,a.building_division building_division,a.address `address`,a.detail_address "
            "detail_address,a.area area, "
@@ -64,7 +64,8 @@ def data_copy_for_batch():
            "a.termsA6 termsA6, a.termsA7 termsA7,a.imputation_reason_confirm_yn imputation_reason_confirm_yn, "
            "a.create_date create_date, a.termsA8 termsA8, a.difStmFldJoinYn difStmFldJoinYn,a.phoneNum phoneNum, "
            "a.birthDate birthDate, a.sex sex, a.jehuCd jehuCd, a.roadAddr roadAddr, a.zipCode zipCode, "
-           "a.squareMeter squareMeter, a.bunjiAddr bunjiAddr, a.capitalDo capitalDo,a.si si,  0 data_processed, "
+           "a.squareMeter squareMeter, a.bunjiAddr bunjiAddr, a.capitalDo capitalDo,a.si si, a.etcStrct etcStrct, "
+           "a.etcRoof etcRoof, a.grade grade  0 data_processed,"
            "0 db_processed,"
            "0 data_skip FROM stm_fld a LEFT JOIN stm_fld_batch b ON a.id = b.id WHERE b.id IS NULL GROUP BY a.id "
            "ORDER BY a.id")
@@ -180,6 +181,8 @@ def db_process(t_stm_fld_batch):
         "strct_cd_nm": stm_fld_batch.strct_cd_nm,
         "roof_strc": stm_fld_batch.roof_strc,
         "otwl_strc": stm_fld_batch.otwl_strc,
+        "etcStrct": stm_fld_batch.etcStrct,
+        "etcRoof": stm_fld_batch.etcRoof,
         "grade": stm_fld_batch.grade,
     }
     session.query(model.t_stm_fld).filter(Column('id') == stm_fld_batch.id).update(to_update)
@@ -207,6 +210,8 @@ def data_process(data):
             "strct_cd_nm": data.get("cover_response").get('strctCdNm'),
             "roof_strc": data.get("cover_response").get('roofCdNm'),
             "otwl_strc": data.get("cover_response").get('otwlStrc'),
+            "etcStrct": data.get("cover_response").get('etcStrct'),
+            "etcRoof": data.get("cover_response").get('etcRoof'),
             "data_processed": 1,
         }
         session.query(model.t_stm_fld_batch).filter(Column('id') == data.get('SEQ')).filter(
