@@ -52,7 +52,7 @@ def data_copy_for_batch():
            "roof_strc, otwl_strc, worker_num_standard_under_yn, worker_num, sales_standard_under_yn, "
            "sales, biz_no, termsA1, termsA2, termsA3, termsA4, termsA6, termsA7, imputation_reason_confirm_yn, "
            "create_date, termsA8, difStmFldJoinYn, phoneNum, birthDate, sex, jehuCd, roadAddr, zipCode, squareMeter, "
-           "bunjiAddr, capitalDo, si, etcStrct, etcRoof, grade"
+           "bunjiAddr, capitalDo, si, etcStrct, etcRoof, grade,"
            "data_processed,db_processed, data_skip) select a.id id, a.biz_name biz_name, a.ceo_name ceo_name, "
            "a.biz_type biz_type,a.building_division building_division,a.address `address`,a.detail_address "
            "detail_address,a.area area, "
