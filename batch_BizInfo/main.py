@@ -340,11 +340,11 @@ def judge_grade(session, SEQ):
     elif len(re.findall(week_combined, otwlStrc, re.IGNORECASE)) > 0:
         flag = 0
 
-    # 지하구분
-    if len(re.findall(r'B|지하', input_bld_st, re.IGNORECASE)) > 0:
-        flag = 2
-    elif len(re.findall(r'B|지하', input_bld_ed, re.IGNORECASE)) > 0:
-        flag = 2
+    # # 지하구분
+    # if len(re.findall(r'지하도', input_bld_st, re.IGNORECASE)) > 0:
+    #     flag = 2
+    # elif len(re.findall(r'지하도', input_bld_ed, re.IGNORECASE)) > 0:
+    #     flag = 2
 
     # 조적조 브럭 처리
     # 조적조(브럭조)
@@ -356,16 +356,23 @@ def judge_grade(session, SEQ):
         flag = 1
 
     # 시장구분
-    if len(re.findall(r'시장', input_bld_st, re.IGNORECASE)) > 0:
-        flag = 0
-    elif len(re.findall(r'시장', input_bld_ed, re.IGNORECASE)) > 0:
-        flag = 0
+    # if len(re.findall(r'시장', input_bld_st, re.IGNORECASE)) > 0:
+    #     flag = 0
+    # elif len(re.findall(r'시장', input_bld_ed, re.IGNORECASE)) > 0:
+    #     flag = 0
 
     detail_address = data.detail_address  # data.get('detail_address')
-    if detail_address is None:
-        detail_address = '1'
-    if len(re.findall(r'시장', detail_address, re.IGNORECASE)) > 0:
-        flag = 0
+
+    # if detail_address is None:
+    #     detail_address = '1'
+    # if len(re.findall(r'시장', detail_address, re.IGNORECASE)) > 0:
+    #     flag = 0
+    # 지하구분
+    if len(re.findall(r'지하도', detail_address, re.IGNORECASE)) > 0:
+        flag = 2
+    elif len(re.findall(r'지하도', detail_address, re.IGNORECASE)) > 0:
+        flag = 2
+
 
     if flag >= 3:
         grade = "1등급"
@@ -377,22 +384,6 @@ def judge_grade(session, SEQ):
         grade = "4등급"
 
     return grade
-
-    # if len(re.findall(r'벽돌|조적', etcStrct, re.IGNORECASE)) > 0:
-    #     otwlStrc = "벽돌(조직) 외벽"
-    # elif len(re.findall(r'블록|블럭', etcStrct, re.IGNORECASE)) > 0:
-    #     otwlStrc = "블록 외벽"
-    # elif len(re.findall(r'철판|판넬', etcStrct, re.IGNORECASE)) > 0:
-    #     otwlStrc = "철판 / 판넬"
-    # elif len(re.findall(r'목조', etcStrct, re.IGNORECASE)) > 0:
-    #     otwlStrc = "목조"
-    # elif len(re.findall(r'유리', etcStrct, re.IGNORECASE)) > 0:
-    #     otwlStrc = "유리벽"
-    # else:
-    #     otwlStrc = "콘크리트 외벽"  # etcStrct 값: 콘크리트, 철근, 시멘트, 시맨트, 기타
-
-    # data['otwlStrc'] = otwlStrc
-
 
 def judge_structure(data):
     if data is None:
