@@ -20,4 +20,4 @@ pip-selfcheck.json
 node_modules/
 *.pyc
 
-
+bin
